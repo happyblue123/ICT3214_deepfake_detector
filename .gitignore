@@ -12,3 +12,8 @@ models/*
 .venv-wsl/
 wavlm-deepfake-detector/
 *.zip
+-/
+.venv/
+venv/
+~/
+ICT3214_deepfake_detector/-

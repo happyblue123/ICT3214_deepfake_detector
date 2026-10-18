@@ -6,3 +6,42 @@
 @media(max-width:640px){.sidebar{position:static;width:100%;height:66px;padding:0 18px;flex-direction:row;align-items:center;justify-content:space-between}.sidebar nav{display:flex;gap:5px}.sidebar .workspace-label,.sidebar-bottom,.nav-item.active,.nav-indicator{display:none}.nav-item{margin:0;width:36px;height:36px;padding:9px;font-size:0;gap:0}.nav-item svg{width:18px;height:18px}.app-shell{margin-left:0}.topbar{height:54px;padding:0 20px}.breadcrumb{font-size:10px}.breadcrumb span{margin:0 6px}.connection-chip{font-size:8px;gap:6px}.connection-chip svg{display:none}main{padding:27px 18px 0}h1{font-size:28px}.page-heading p{font-size:11px;margin-top:10px;max-width:320px}.eyebrow{font-size:8px}.page-heading{margin-bottom:23px}.panel{padding:18px}.panel-header h2{font-size:14px}.subtle-label{font-size:7px;letter-spacing:1px}.dropzone{padding:25px 8px;min-height:221px}.dropzone small{font-size:8px}.action-row{gap:17px;flex-wrap:wrap}.primary-button{font-size:10px;padding:12px 14px;gap:12px}.text-button{font-size:9px}.empty-report{padding:23px 18px;gap:14px}.empty-report p{font-size:9px}.summary-grid{gap:10px}.summary-card{padding:17px 14px;min-height:179px}.summary-label{font-size:7px;letter-spacing:.7px}.summary-card h3{font-size:20px}.summary-card p{font-size:9px}.summary-card .tag{font-size:7px}.report-heading{flex-direction:column;gap:14px}.report-actions{max-width:none}.legend{font-size:7px;gap:6px;max-width:170px}.timeline-panel .panel-header{align-items:flex-start}.waveform{gap:.5px}.player-row{flex-direction:column;align-items:stretch;gap:10px}.player-row audio{max-width:100%;width:100%}.processing-table{grid-template-columns:repeat(2,1fr)}.footer{margin-top:28px;font-size:8px}.demo-banner{padding:13px;gap:10px}.demo-banner span{font-size:9px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
 @media print{.sidebar,.topbar,.intro-grid,.page-heading,.report-actions,.footer,.player-row,.evidence-detail button{display:none!important}.app-shell{margin:0}main{padding:0;max-width:none;background:#fff}body{background:white;font-size:11px}#results{margin:0}.summary-card,.panel,.method-details,.demo-banner{break-inside:avoid;box-shadow:none}.summary-grid{grid-template-columns:repeat(4,1fr)}.detail-grid{grid-template-columns:1fr 1fr}.tag,.wave-bar,.demo-banner{-webkit-print-color-adjust:exact;print-color-adjust:exact}.panel{margin-top:14px}.method-details>div,.method-details>ul{display:block!important}.segment-track{flex-wrap:wrap;overflow:visible}}
+.url-input-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    align-items: center;
+}
+.url-input-row input {
+    flex: 1;
+    min-width: 0;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border, #ccc);
+    border-radius: 6px;
+    font-size: 0.9rem;
+    background: var(--surface, #fff);
+    color: var(--text, #000);
+}
+.url-input-row small {
+    width: 100%;
+    color: var(--muted, #888);
+    font-size: 0.75rem;
+}
+.text-check-panel{margin:22px 0}
+.text-check-label{display:block;margin-bottom:8px;color:#576172;font-size:11px;font-weight:500}
+.text-check-input{display:block;width:100%;resize:vertical;min-height:120px;padding:12px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);font:inherit;font-size:12px;line-height:1.6}
+.text-check-input:focus{border-color:var(--blue)}
+.text-check-actions{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-top:12px}
+.text-check-actions small,.text-check-disclaimer{max-width:680px;color:var(--muted);font-size:10px}
+.text-check-result{margin-top:16px;padding:16px;border:1px solid var(--line);border-radius:9px;background:#fafaff;color:var(--ink);font-size:12px}
+.text-check-result.error{border-color:#efc4c7;background:#fff7f7;color:#9c3038}
+.text-check-verdicts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.text-check-verdicts>div{display:flex;flex-direction:column;gap:4px}
+.text-check-verdicts small{color:var(--muted);font-size:8px;letter-spacing:1px}
+.text-check-verdicts strong{font-size:14px}
+.text-check-reason{margin:14px 0 8px}
+.text-check-cues{margin:8px 0;padding-left:20px}
+.text-check-cues li{margin:5px 0}
+.text-check-disclaimer{display:block;margin-top:12px}
+@media(max-width:640px){.text-check-actions{align-items:stretch;flex-direction:column;gap:10px}.text-check-actions .primary-button{align-self:flex-start}.text-check-verdicts{grid-template-columns:repeat(2,minmax(0,1fr))}}

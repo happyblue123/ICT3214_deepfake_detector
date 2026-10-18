@@ -8,28 +8,38 @@ import logging
 import os
 from pathlib import Path
 import shutil
+import subprocess
+import sys
 import threading
 import time
 import uuid
+from urllib.parse import urlsplit
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, Field
 
 from .detectors import DemoDetector, load_detector, load_plugin
-from .pipeline import MediaError, analyze, normalize_media
+from .pipeline import MediaError, analyze, ffmpeg_executable, normalize_media
 
 ROOT = Path(__file__).resolve().parents[1]
 RUNTIME = ROOT / ".runtime"
 MAX_UPLOAD = 100 * 1024 * 1024
 RETENTION_SECONDS = 30 * 60
 EXTENSIONS = {".wav", ".mp3", ".m4a", ".flac", ".ogg", ".webm", ".mp4", ".mov", ".mkv"}
+URL_HOSTS = ("youtube.com", "youtu.be", "facebook.com", "fb.watch", "instagram.com", "tiktok.com")
 JOBS: dict[str, dict] = {}
 LOCK = threading.RLock()
 EXECUTOR = ThreadPoolExecutor(max_workers=1)
 DETECTOR = None
 CONTENT_ANALYZER = None
 logger = logging.getLogger("voicescope")
+MAX_TEXT_ANALYSIS = 10_000
+
+
+class TextAnalysisRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=MAX_TEXT_ANALYSIS)
 
 
 def purge_expired():
@@ -113,6 +123,38 @@ def validate_content(value, duration):
     return {"transcript": value["transcript"], "scam_analysis": scam}
 
 
+def validate_text_analysis(value):
+    if not isinstance(value, dict):
+        raise ValueError("Text classifier must return an object")
+    if value.get("scam_verdict") not in {"SCAM", "NOT_SCAM", "UNCERTAIN"}:
+        raise ValueError("Text classifier returned an invalid scam verdict")
+    if value.get("phishing_verdict") not in {"PHISHING", "NOT_PHISHING", "UNCERTAIN"}:
+        raise ValueError("Text classifier returned an invalid phishing verdict")
+    confidence, score = value.get("confidence"), value.get("score")
+    if (isinstance(confidence, bool) or not isinstance(confidence, (int, float))
+            or not 0 <= confidence <= 1):
+        raise ValueError("Text classifier returned an invalid confidence")
+    if isinstance(score, bool) or not isinstance(score, int) or not 0 <= score <= 100:
+        raise ValueError("Text classifier returned an invalid score")
+    if not isinstance(value.get("reason"), str) or not isinstance(value.get("cues"), list):
+        raise ValueError("Text classifier returned invalid evidence")
+    for cue in value["cues"]:
+        if (not isinstance(cue, dict) or not isinstance(cue.get("category"), str)
+                or not isinstance(cue.get("text"), str)):
+            raise ValueError("Text classifier returned invalid evidence")
+    return {
+        "status": "completed",
+        "scam_verdict": value["scam_verdict"],
+        "phishing_verdict": value["phishing_verdict"],
+        "confidence": confidence,
+        "score": score,
+        "reason": value["reason"][:2000],
+        "cues": [{"category": cue["category"][:100], "text": cue["text"][:500]}
+                 for cue in value["cues"][:8]],
+        "disclaimer": "This is an AI estimate, not proof a message is safe or fraudulent.",
+    }
+
+
 def process_job(job_id, source, mode):
     try:
         with LOCK:
@@ -150,6 +192,69 @@ def process_job(job_id, source, mode):
             JOBS[job_id].update(status="failed", stage="failed", error=error, updated_at=time.time())
 
 
+def fail_url_job(job_id, directory, error):
+    shutil.rmtree(directory, ignore_errors=True)
+    with LOCK:
+        JOBS[job_id].update(status="failed", stage="failed", error=error, updated_at=time.time())
+
+
+def process_url_job(job_id, url, mode):
+    directory = RUNTIME / job_id
+    source = directory / "input.wav"
+    try:
+        command = [
+            sys.executable, "-m", "yt_dlp", "--ignore-config", "--no-playlist",
+            "--format", "bestaudio/best", "--extract-audio", "--audio-format", "wav",
+            "--max-filesize", f"{MAX_UPLOAD // (1024 * 1024)}M",
+            "--ffmpeg-location", ffmpeg_executable(),
+            "--output", str(directory / "input.%(ext)s"), url,
+        ]
+        result = subprocess.run(command, capture_output=True, text=True, timeout=120,
+                                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+        if result.returncode != 0:
+            details = (result.stderr or result.stdout or "").strip().replace(url, "[link]")
+            details = " ".join(details.split())[-500:]
+            message = "Could not download audio from this link."
+            if details:
+                message = f"{message} yt-dlp: {details}"
+            else:
+                message = f"{message} Check that it is public and supported."
+            raise MediaError(message)
+        if not source.is_file() or source.stat().st_size == 0:
+            raise MediaError("The link did not provide a downloadable audio track.")
+        if source.stat().st_size > MAX_UPLOAD:
+            raise MediaError("Downloaded audio exceeds the 100 MB limit.")
+    except subprocess.TimeoutExpired:
+        logger.warning("Link download timed out for %s", job_id)
+        fail_url_job(job_id, directory, "Downloading from this link timed out. Try a shorter or different link.")
+        return
+    except MediaError as exc:
+        logger.warning("Link download failed for %s: %s", job_id, exc)
+        fail_url_job(job_id, directory, str(exc))
+        return
+    except Exception:
+        logger.exception("Link download failed for %s", job_id)
+        fail_url_job(job_id, directory, "Could not download audio from this link. Check that it is public and supported.")
+        return
+    process_job(job_id, source, mode)
+
+
+def validate_source_url(value):
+    if not isinstance(value, str) or not value.strip():
+        raise HTTPException(422, "A video URL is required.")
+    try:
+        parsed = urlsplit(value.strip())
+        host = (parsed.hostname or "").lower().rstrip(".")
+        port = parsed.port
+    except ValueError:
+        raise HTTPException(422, "Enter a valid public video URL.") from None
+    if (parsed.scheme != "https" or not host or parsed.username or parsed.password
+            or port not in {None, 443}
+            or not any(host == domain or host.endswith("." + domain) for domain in URL_HOSTS)):
+        raise HTTPException(422, "Use a public HTTPS video link from TikTok, YouTube, Facebook, or Instagram.")
+    return value.strip()
+
+
 @app.get("/api/health")
 def health():
     return {"status": "ok", "detector_connected": DETECTOR is not None,
@@ -157,6 +262,28 @@ def health():
             "content_connected": CONTENT_ANALYZER is not None,
             "limits": {"max_upload_bytes": MAX_UPLOAD, "max_duration_seconds": 600,
                        "retention_minutes": 30}, "demo_available": True}
+
+
+@app.post("/api/text-analysis")
+async def analyze_text(payload: TextAnalysisRequest):
+    text = payload.text.strip()
+    if not text:
+        raise HTTPException(422, "Enter a message to analyze.")
+    if len(text) > MAX_TEXT_ANALYSIS:
+        raise HTTPException(422, f"Text must be {MAX_TEXT_ANALYSIS:,} characters or fewer.")
+    if CONTENT_ANALYZER is None or not callable(getattr(CONTENT_ANALYZER, "classify_text", None)):
+        raise HTTPException(
+            503,
+            "Text scam analysis is unavailable. Configure CONTENT_PLUGIN and GEMINI_API_KEY, then restart the app.",
+        )
+    try:
+        result = await asyncio.wrap_future(
+            EXECUTOR.submit(CONTENT_ANALYZER.classify_text, text)
+        )
+        return validate_text_analysis(result)
+    except Exception as exc:
+        logger.exception("Text scam analysis failed")
+        raise HTTPException(502, "Text analysis failed. Check the content plugin and backend logs.") from exc
 
 
 @app.post("/api/analyses", status_code=202)
@@ -235,4 +362,35 @@ def delete_analysis(job_id: str):
 
 
 # API routes precede the static mount so local frontend and API share one origin.
+@app.post("/api/analyses/from-url", status_code=202)
+async def create_analysis_from_url(payload: dict):
+    url = validate_source_url(payload.get("url"))
+    mode = payload.get("mode", "live")
+    if not isinstance(mode, str) or mode not in {"live", "demo"}:
+        raise HTTPException(422, "Mode must be live or demo.")
+    if mode == "live" and DETECTOR is None:
+        raise HTTPException(503, "The trained detector is not connected.")
+
+    purge_expired()
+    with LOCK:
+        if sum(job["status"] not in {"completed", "failed"} for job in JOBS.values()) >= 4 or len(JOBS) >= 64:
+            raise HTTPException(429, "Analysis capacity reached.")
+        job_id = uuid.uuid4().hex
+        JOBS[job_id] = {"id": job_id, "filename": url[:200],
+                        "status": "downloading", "stage": "downloading", "progress": 5,
+                        "mode": mode, "created_at": datetime.now(timezone.utc).isoformat(),
+                        "updated_at": time.time(), "result": None, "error": None}
+
+    directory = RUNTIME / job_id
+    directory.mkdir(parents=True)
+    try:
+        EXECUTOR.submit(process_url_job, job_id, url, mode)
+        return {"id": job_id, "status": "downloading", "status_url": f"/api/analyses/{job_id}"}
+
+    except BaseException:
+        shutil.rmtree(directory, ignore_errors=True)
+        with LOCK:
+            JOBS.pop(job_id, None)
+        raise
+
 app.mount("/", StaticFiles(directory=ROOT / "dist", html=True), name="frontend")

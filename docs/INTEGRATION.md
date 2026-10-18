@@ -56,14 +56,18 @@ The current PoC runs the content adapter after deepfake inference. The proposal 
 | --- | --- |
 | `GET /api/health` | Connectivity, model availability, content availability, limits |
 | `POST /api/analyses` | Multipart fields `file` and `mode` (`live` default, or explicit `demo`); returns HTTP 202 with job ID |
+| `POST /api/analyses/from-url` | JSON fields `url` and `mode`; downloads public HTTPS media from TikTok, YouTube, Facebook, or Instagram and returns HTTP 202 |
+| `POST /api/text-analysis` | JSON field `text` (1–10,000 characters); returns separate scam and phishing verdicts using `CONTENT_PLUGIN.classify_text` |
 | `GET /api/analyses/{id}` | Status, stage, progress, error, and result when completed |
 | `GET /api/analyses/{id}/audio` | Normalized WAV, available after completion |
 | `GET /api/analyses/{id}/report` | Full JSON report download |
 | `DELETE /api/analyses/{id}` | Removes completed/failed analysis and files; HTTP 204 |
 
-Statuses: `uploading`, `queued`, `processing`, `completed`, `failed`. Stages: `uploading`, `extracting`, `detecting`, `reporting`, `completed`, `failed`. Poll every approximately 1 second. Inference progress advances as windows finish; it is not a reliable duration estimate. The browser times out after 12 minutes; the backend does not cancel inference on browser disconnect. The UI does not upload files unless the user presses Analyze.
+Statuses: `uploading`, `downloading`, `queued`, `processing`, `completed`, `failed`. Stages: `uploading`, `downloading`, `extracting`, `detecting`, `reporting`, `completed`, `failed`. Poll every approximately 1 second. Inference progress advances as windows finish; it is not a reliable duration estimate. The browser times out after 12 minutes; the backend does not cancel inference on browser disconnect. Link downloads use `yt-dlp` and `curl-cffi` (required for browser impersonation on some providers), are limited to 100 MB, and only accept HTTPS links on the supported provider domains.
 
-Errors include 400 for empty files, 413 for files beyond the size limit, 415 for unsupported extensions, 422 for unsupported modes, 429 for queue capacity, and 503 for unavailable real detector. Decoding, duration, and inference errors appear in job status after HTTP 202. Validation uses extension allowlisting plus actual decoding; file MIME metadata is not treated as proof of valid media.
+Errors include 400 for empty files, 413 for files beyond the size limit, 415 for unsupported extensions, 422 for unsupported modes or links, 429 for queue capacity, and 503 for unavailable real detector. Decoding, duration, download, and inference errors appear in job status after HTTP 202. File validation uses extension allowlisting plus actual decoding; MIME metadata is not treated as proof of valid media. File uploads and link downloads begin only after the user starts analysis.
+
+Text analysis returns `scam_verdict` (`SCAM`, `NOT_SCAM`, or `UNCERTAIN`), `phishing_verdict` (`PHISHING`, `NOT_PHISHING`, or `UNCERTAIN`), a model score, confidence, reason, and evidence cues. It requires the configured content plugin and Gemini API key. Submitted text is sent to Gemini; users should not paste passwords, one-time codes, or sensitive personal information. The model score is not a calibrated probability, and a benign result cannot prove a message is safe.
 
 ## Report fields
 

@@ -23,6 +23,8 @@ function canAnalyze() {
   $("demo-mode").disabled = busy;
   $("load-example").disabled = busy;
   $("connection").disabled = busy;
+  if ($("url-submit")) $("url-submit").disabled = busy || !$("url-input").value.trim();
+  if ($("url-input")) $("url-input").disabled = busy;
 }
 async function api(path, options = {}) {
   const response = await fetch(`${apiBase}${path}`, { ...options, signal: options.signal || AbortSignal.timeout(15000) });
@@ -75,7 +77,7 @@ $("dropzone").addEventListener("drop", e => {if (e.dataTransfer.files.length > 1
 $("demo-mode").addEventListener("change", () => {$("demo-explainer").hidden=!$("demo-mode").checked;canAnalyze();if(health) message(report ? "This setting applies to your next analysis. The report below is unchanged." : "");});
 
 function progress(stage, value) {
-  const labels = {uploading:"Uploading recording",queued:"Waiting for analysis",extracting:"Extracting & standardizing audio",detecting:"Inspecting audio windows",reporting:"Preparing the detailed report",completed:"Analysis complete"};
+  const labels = {uploading:"Uploading recording",downloading:"Downloading linked media",queued:"Waiting for analysis",extracting:"Extracting & standardizing audio",detecting:"Inspecting audio windows",reporting:"Preparing the detailed report",completed:"Analysis complete"};
   $("progress-area").hidden=false;
   $("progress-stage").textContent=labels[stage] || "Processing recording";
   $("progress").value=value; $("progress-number").textContent=`${value}%`;
@@ -240,4 +242,106 @@ $("nav-method").addEventListener("click",()=>openDialog("How the assessment work
 $("nav-analyze").addEventListener("click",()=>window.scrollTo({top:0,behavior:"smooth"}));
 $("close-dialog").addEventListener("click",()=>$("info-dialog").close());
 $("info-dialog").addEventListener("click",e=>{if(e.target===$("info-dialog")){const rect=$("info-dialog").getBoundingClientRect();if(e.clientX<rect.left||e.clientX>rect.right||e.clientY<rect.top||e.clientY>rect.bottom)$("info-dialog").close();}});
+
+// ── URL input logic ───────────────────────────────────────────────────────────
+const urlInput  = $("url-input");
+const urlSubmit = $("url-submit");
+const scamText = $("scam-text");
+const checkTextButton = $("check-text");
+const textCheckResult = $("text-check-result");
+let textCheckBusy = false;
+
+urlInput.addEventListener("input", canAnalyze);
+urlInput.addEventListener("keydown", event => {
+  if (event.key === "Enter" && !urlSubmit.disabled) urlSubmit.click();
+});
+
+urlSubmit.addEventListener("click", async () => {
+  const url = urlInput.value.trim();
+  const mode = $("demo-mode").checked ? "demo" : "live";
+  if (!url || busy) return;
+
+  busy = true;
+  canAnalyze();
+  message("");
+  const generation = ++pollGeneration;
+
+  try {
+    await deleteCurrentJob();
+    $("results").hidden = true;
+    $("empty-report").hidden = false;
+    report = null;
+    progress("downloading", 5);
+
+    const response = await fetch(`${apiBase}/api/analyses/from-url`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url, mode }),
+      signal: AbortSignal.timeout(15000),
+    });
+    let data;
+    try {data = await response.json();} catch {data = {};}
+    if (!response.ok) throw new Error(typeof data.detail === "string" ? data.detail : `Request failed (${response.status}).`);
+    if (typeof data.id !== "string") throw new Error("The API did not return an analysis job.");
+
+    activeJob = data.id;
+    const deadline = Date.now() + 12 * 60 * 1000;
+    while (generation === pollGeneration) {
+      if (Date.now() > deadline) throw new Error("Analysis is taking longer than expected.");
+
+      const status = await api(`/api/analyses/${data.id}`);
+      progress(status.stage, status.progress);
+      if (status.status === "failed") throw new Error(status.error || "Analysis failed.");
+      if (status.status === "completed") {
+        renderReport(status.result, `${apiBase}/api/analyses/${data.id}/audio`);
+        message("Analysis complete. Review its score ranges and interpretation limits below.");
+        $("results").scrollIntoView({ behavior: "smooth", block: "start" });
+        break;
+      }
+      await new Promise(resolve => setTimeout(resolve, 900));
+    }
+  } catch (error) {
+    message(error.message, true);
+    $("progress-area").hidden = true;
+  } finally {
+    busy = false;
+    canAnalyze();
+  }
+});
+
+scamText.addEventListener("input", () => {
+  checkTextButton.disabled = textCheckBusy || !scamText.value.trim();
+});
+
+checkTextButton.addEventListener("click", async () => {
+  const text = scamText.value.trim();
+  if (!text || textCheckBusy) return;
+
+  textCheckBusy = true;
+  checkTextButton.disabled = true;
+  checkTextButton.textContent = "Checking…";
+  textCheckResult.hidden = false;
+  textCheckResult.className = "text-check-result";
+  textCheckResult.textContent = "Analyzing the message…";
+
+  try {
+    const result = await api("/api/text-analysis", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+      signal: AbortSignal.timeout(60000),
+    });
+    const scamLabels = {SCAM: "Likely scam", NOT_SCAM: "No scam indicators found", UNCERTAIN: "Uncertain"};
+    const phishingLabels = {PHISHING: "Likely phishing", NOT_PHISHING: "No phishing indicators found", UNCERTAIN: "Uncertain"};
+    textCheckResult.innerHTML = `<div class="text-check-verdicts"><div><small>SCAM ASSESSMENT</small><strong>${esc(scamLabels[result.scam_verdict] || "Uncertain")}</strong></div><div><small>PHISHING ASSESSMENT</small><strong>${esc(phishingLabels[result.phishing_verdict] || "Uncertain")}</strong></div><div><small>MODEL SCORE · NOT A PROBABILITY</small><strong>${esc(result.score)}/100</strong></div><div><small>MODEL CONFIDENCE · NOT CALIBRATED</small><strong>${Math.round(result.confidence * 100)}%</strong></div></div><p class="text-check-reason">${esc(result.reason)}</p>${result.cues.length ? `<ul class="text-check-cues">${result.cues.map(cue => `<li><strong>${esc(cue.category)}:</strong> ${esc(cue.text)}</li>`).join("")}</ul>` : ""}<small class="text-check-disclaimer">${esc(result.disclaimer)}</small>`;
+  } catch (error) {
+    textCheckResult.classList.add("error");
+    textCheckResult.textContent = error.message;
+  } finally {
+    textCheckBusy = false;
+    checkTextButton.innerHTML = `Check message${icon("arrow")}`;
+    checkTextButton.disabled = !scamText.value.trim();
+  }
+});
+
 checkConnection();

@@ -2,16 +2,17 @@
 
 ICT3214 Security Analytics · *Robust Deepfake Voice Detection and Scam Cue Analysis Using Self-Supervised Speech Models*
 
-VoiceScope is a local web app. You upload an audio or video recording and it tells you:
+VoiceScope is a local web app. You can upload an audio or video recording, or paste a public video link from TikTok, YouTube, Facebook, or Instagram. It tells you:
 
 1. **Is the voice AI-generated?** A WavLM model fine-tuned on the Fake-or-Real (FoR) dataset scores the recording window by window.
 2. **What was said?** Whisper transcribes the speech with timestamps.
 3. **Is it a scam?** Gemini reads the transcript and checks it against common Singapore scam patterns (government impersonation, PayNow transfer requests, parcel scams, fake jobs and so on).
+4. **Is a message phishing or a scam?** Paste an SMS, email, or chat message into the text checker for a separate AI assessment.
 
-Everything except the Gemini call runs on your own computer at **http://127.0.0.1:8000**.
+Audio processing runs on your own computer at **http://127.0.0.1:8000**. Text messages and transcripts are sent to Gemini for classification. Do not submit passwords, one-time codes, or sensitive personal information.
 
 ```
-upload (wav/mp3/mp4/...)
+upload (wav/mp3/mp4/...) or supported video link
    │  ffmpeg → 16 kHz mono
    ├──► WavLM detector ──► synthetic score per 4 s window + overall assessment
    └──► Whisper ──► transcript ──► Gemini ──► scam risk (low / medium / high) + tactics
@@ -29,7 +30,7 @@ upload (wav/mp3/mp4/...)
 | OS | Windows 10/11 (64-bit). **WSL 2 with Ubuntu is recommended**, see the note below. |
 | Python | 3.12 |
 | Disk | About 3 GB (PyTorch, WavLM model, Whisper model) |
-| Internet | Needed for the first install, the first Whisper download, and every Gemini call |
+| Internet | Needed for the first install, public video-link downloads, the first Whisper download, and every Gemini call |
 | Gemini API key | From [Google AI Studio](https://aistudio.google.com). The project behind the key must have credits or free-tier quota. |
 | Trained model | The `wavlm-deepfake-detector` folder produced by the training notebook (see step 2) |
 
@@ -143,6 +144,8 @@ python3 -m venv ~/venv-voicescope
 ~/venv-voicescope/bin/pip install -r requirements.txt
 ~/venv-voicescope/bin/pip install torch --index-url https://download.pytorch.org/whl/cpu
 ~/venv-voicescope/bin/pip install -r requirements-model.txt
+~/venv-voicescope/bin/pip install -U yt-dlp curl-cffi
+~/venv-voicescope/bin/pip install yt-dlp
 ```
 
 Notes:
@@ -272,6 +275,6 @@ for i, f in enumerate(real_files[:3], 1): shutil.copy(f, f"test_files/REAL_{i}.w
 - **Provisional thresholds.** The 0.35 / 0.65 thresholds are not calibrated. Scores are model outputs, not probabilities.
 - **CPU only.** Without a GPU, Whisper and WavLM are slow on long recordings.
 - **Gemini needs internet.** Transcripts are sent to Google for the scam check. Everything else stays on the computer.
-- **No video links.** The web app accepts uploaded files only. To analyse a TikTok or Facebook video, download it first (for example with `yt-dlp`).
+- **Video links must be public and supported.** Link downloads use `yt-dlp` and `curl-cffi` for sites that require browser impersonation; private, restricted, expired, or unsupported links may not work. Link analysis is limited to HTTPS links from TikTok, YouTube, Facebook, and Instagram.
 - **Synthetic is not the same as scam.** Voice authenticity and scam content are separate signals. An AI voice can be harmless, and a human voice can be a scammer.
 - **Temporary results.** Uploads and reports are deleted 30 minutes after completion, when closed, or when the server restarts.

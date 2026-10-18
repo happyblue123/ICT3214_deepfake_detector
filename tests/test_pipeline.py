@@ -5,6 +5,7 @@ import time
 import unittest
 import wave
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 import subprocess
 
@@ -134,6 +135,92 @@ class ApiTests(unittest.TestCase):
 
     def test_bad_mode(self):
         self.assertEqual(self.upload(wav_bytes(), mode="mystery").status_code, 422)
+
+    def test_text_analysis_reports_scam_and_phishing_verdicts(self):
+        expected = {
+            "scam_verdict": "SCAM",
+            "phishing_verdict": "PHISHING",
+            "confidence": .92,
+            "score": 91,
+            "reason": "The message impersonates a bank and asks for login details.",
+            "cues": [{"category": "Credential theft", "text": "It asks the recipient to enter bank details."}],
+        }
+
+        class Analyzer:
+            def classify_text(self, text):
+                self.text = text
+                return expected
+
+        analyzer = Analyzer()
+        with patch.object(main, "CONTENT_ANALYZER", analyzer):
+            response = self.client.post("/api/text-analysis", json={"text": "  Suspicious bank message  "})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(analyzer.text, "Suspicious bank message")
+        self.assertEqual(response.json()["scam_verdict"], "SCAM")
+        self.assertEqual(response.json()["phishing_verdict"], "PHISHING")
+        self.assertEqual(response.json()["score"], 91)
+
+    def test_text_analysis_requires_content_plugin_and_nonempty_bounded_text(self):
+        with patch.object(main, "CONTENT_ANALYZER", None):
+            self.assertEqual(self.client.post("/api/text-analysis", json={"text": "message"}).status_code, 503)
+        with patch.object(main, "CONTENT_ANALYZER", object()):
+            self.assertEqual(self.client.post("/api/text-analysis", json={"text": "  "}).status_code, 422)
+            self.assertEqual(self.client.post(
+                "/api/text-analysis", json={"text": "x" * (main.MAX_TEXT_ANALYSIS + 1)}
+            ).status_code, 422)
+
+    def test_url_analysis_accepts_supported_public_video_links(self):
+        def fake_download(command, **kwargs):
+            output = Path(command[command.index("--output") + 1].replace("%(ext)s", "wav"))
+            output.write_bytes(b"downloaded audio")
+            return SimpleNamespace(returncode=0, stderr="")
+
+        def run_inline(worker, *args):
+            worker(*args)
+
+        def finish_job(job_id, source, mode):
+            self.assertTrue(source.is_file())
+            self.assertEqual(mode, "demo")
+            main.JOBS[job_id].update(status="completed", stage="completed", updated_at=time.time())
+
+        with patch.object(main.subprocess, "run", side_effect=fake_download) as download, \
+                patch.object(main, "process_job", side_effect=finish_job), \
+                patch.object(main.EXECUTOR, "submit", side_effect=run_inline):
+            response = self.client.post("/api/analyses/from-url",
+                                        json={"url": "https://www.youtube.com/watch?v=example", "mode": "demo"})
+
+        self.assertEqual(response.status_code, 202)
+        self.assertEqual(response.json()["status"], "downloading")
+        command = download.call_args.args[0]
+        self.assertIn("yt_dlp", command)
+        self.assertIn("--no-playlist", command)
+        self.assertEqual(command[-1], "https://www.youtube.com/watch?v=example")
+
+    def test_url_analysis_rejects_non_https_and_unsupported_hosts(self):
+        for url in ("http://www.youtube.com/watch?v=example",
+                    "https://youtube.com.attacker.example/watch?v=example",
+                    "https://127.0.0.1/video"):
+            with self.subTest(url=url):
+                response = self.client.post("/api/analyses/from-url", json={"url": url, "mode": "demo"})
+                self.assertEqual(response.status_code, 422)
+
+    def test_url_download_failure_includes_redacted_downloader_details(self):
+        url = "https://www.tiktok.com/@example/video/123?token=private"
+
+        def run_inline(worker, *args):
+            worker(*args)
+
+        with patch.object(main, "ffmpeg_executable", return_value="ffmpeg"), \
+                patch.object(main.subprocess, "run",
+                             return_value=SimpleNamespace(returncode=1, stderr=f"ERROR: blocked: {url}", stdout="")), \
+                patch.object(main.EXECUTOR, "submit", side_effect=run_inline):
+            response = self.client.post("/api/analyses/from-url", json={"url": url, "mode": "demo"})
+
+        job = self.client.get(f"/api/analyses/{response.json()['id']}").json()
+        self.assertEqual(job["status"], "failed")
+        self.assertIn("ERROR: blocked: [link]", job["error"])
+        self.assertNotIn("token=private", job["error"])
 
     def test_corrupt_media_fails_cleanly(self):
         job_id = self.upload(b"not audio").json()["id"]
