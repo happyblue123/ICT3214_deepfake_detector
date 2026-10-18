@@ -200,7 +200,49 @@ $("export-csv").addEventListener("click",()=>{
   const rows=[["mode","filename","model","model_version","window_id","start_seconds","end_seconds","synthetic_score","assessment","evidence"],...report.segments.map(s=>[report.mode,report.filename,report.model.name,report.model.version,s.id,s.start_seconds,s.end_seconds,s.synthetic_score,s.assessment,s.evidence.join(" | ")])];
   download(rows.map(row=>row.map(cell).join(",")).join("\r\n"),`voicescope-${report.mode}-windows.csv`,"text/csv;charset=utf-8");
 });
-$("print-report").addEventListener("click",()=>{$("processing-details").parentElement.open=true;window.print();});
+let reportExport = null;
+$("print-report").addEventListener("click",()=>{
+  if(!report)return;
+  // Freeze this export so later analysis or demo-checkbox changes cannot relabel it.
+  const snapshot=JSON.parse(JSON.stringify(report));
+  reportExport={html:VoiceScopeReport.buildDocument(snapshot),filename:VoiceScopeReport.filename(snapshot)};
+  $("print-report-document").disabled=true;
+  $("save-report-html").disabled=false;
+  $("report-preview-status").textContent="Preparing preview…";
+  $("report-preview").srcdoc=reportExport.html;
+  $("report-dialog").showModal();
+});
+$("report-preview").addEventListener("load",()=>{
+  if(!reportExport)return;
+  // srcdoc inherits the dashboard's base URL. Keep fragment navigation inside
+  // the preview; the downloaded standalone document uses normal anchor links.
+  const doc=$("report-preview").contentDocument;
+  doc.addEventListener("click",event=>{
+    const link=event.target.closest?.('a[href^="#"]');
+    if(!link)return;
+    event.preventDefault();
+    const target=doc.getElementById(link.getAttribute("href").slice(1));
+    if(target){target.scrollIntoView();target.setAttribute("tabindex","-1");target.focus({preventScroll:true});}
+  });
+  $("print-report-document").disabled=false;
+  $("report-preview-status").textContent="Ready · audio is not embedded";
+});
+$("print-report-document").addEventListener("click",()=>{
+  if(!reportExport || $("print-report-document").disabled)return;
+  const frame=$("report-preview").contentWindow;
+  try{frame.focus();frame.print();}
+  catch{$("report-preview-status").textContent="Printing is unavailable here. Download the HTML report and print it from your browser.";}
+});
+$("save-report-html").addEventListener("click",()=>{
+  if(reportExport)download(reportExport.html,reportExport.filename,"text/html;charset=utf-8");
+});
+$("close-report-preview").addEventListener("click",()=>$("report-dialog").close());
+$("report-dialog").addEventListener("close",()=>{
+  reportExport=null;
+  $("report-preview").srcdoc="";
+  $("print-report-document").disabled=true;
+  $("save-report-html").disabled=true;
+});
 $("delete-report").addEventListener("click",async ()=>{
   try{await deleteCurrentJob();++pollGeneration;$("audio-player").pause();$("audio-player").removeAttribute("src");$("audio-player").load();if(objectUrl){URL.revokeObjectURL(objectUrl);objectUrl=null;}report=null;$("results").hidden=true;$("empty-report").hidden=false;$("progress-area").hidden=true;message("Analysis and retained audio deleted.");}catch(e){message(e.message,true);}
 });

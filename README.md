@@ -218,9 +218,14 @@ Open **http://127.0.0.1:8000** in your normal Windows browser. This works for WS
    - **Timeline.** A score for each 4-second window, with suspicious regions highlighted. Click to replay a section.
    - **Transcript.** Timestamped Whisper output. Click a timestamp to jump to it.
    - **Scam risk.** Low, medium or high from Gemini, with the tactics it found as cues.
-   - **Export.** JSON, CSV or Print/PDF.
+   - **Readable report.** Select **Review & export report** to preview a separate document leading with **Scam / Not scam** and **Likely AI-generated / Likely human**. The scam verdict is taken from the saved content-model result; risk-only or inconclusive results retain their original meaning. Supporting sections include score interpretation, suggested verification steps, timestamps to review, generated cues, transcript, limitations and a complete window-score appendix. **Print / Save as PDF** prints this document, rather than the dashboard. Select **Save as PDF** in your browser's print dialog. **Download HTML report** saves a self-contained, searchable document that opens offline and still works after the analysis expires. It does not embed the audio; retain the original recording. The transcript may contain private information, so review it before sharing.
+   - **Data exports.** JSON preserves the original analysis result; CSV contains the window scores for a spreadsheet. Keep the JSON alongside the readable report when collecting evaluation evidence.
 
 The first analysis after installing downloads the Whisper model (about 460 MB). On a laptop CPU, a 1–2 minute recording can take a few minutes.
+
+Readable exports use the stored analysis result; they do not run the models again or make additional API calls. Demo reports remain explicitly simulated, and unavailable scam analysis is never presented as low risk. Scores are not calibrated probabilities. A low overall score can contain inconclusive windows, which remain visible in the report. Suggested next steps are general verification guidance, not additional model findings.
+
+To check the report generator, run `node --test tests/test_report_export.cjs` (Node.js is needed only for this development check, not to use the app).
 
 Risk mapping used by `scam_content.py`:
 
