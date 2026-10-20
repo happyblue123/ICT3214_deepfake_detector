@@ -107,7 +107,6 @@ $("analyze").addEventListener("click",async () => {
   busy=true;canAnalyze();message("");
   const generation = ++pollGeneration;
   try {
-    await deleteCurrentJob();
     $("results").hidden=true;$("empty-report").hidden=false;
     report=null;
     progress("uploading",0);
@@ -244,7 +243,7 @@ $("report-dialog").addEventListener("close",()=>{
   $("save-report-html").disabled=true;
 });
 $("delete-report").addEventListener("click",async ()=>{
-  try{await deleteCurrentJob();++pollGeneration;$("audio-player").pause();$("audio-player").removeAttribute("src");$("audio-player").load();if(objectUrl){URL.revokeObjectURL(objectUrl);objectUrl=null;}report=null;$("results").hidden=true;$("empty-report").hidden=false;$("progress-area").hidden=true;message("Analysis and retained audio deleted.");}catch(e){message(e.message,true);}
+  try{await deleteCurrentJob();++pollGeneration;$("audio-player").pause();$("audio-player").removeAttribute("src");$("audio-player").load();if(objectUrl){URL.revokeObjectURL(objectUrl);objectUrl=null;}report=null;$("results").hidden=true;$("empty-report").hidden=false;$("progress-area").hidden=true;history.replaceState(null,"","/");message("Analysis and retained audio deleted.");}catch(e){message(e.message,true);}
 });
 
 function demoAudio() {
@@ -258,7 +257,7 @@ function demoAudio() {
 }
 $("load-example").addEventListener("click",async ()=>{
   if(busy)return;
-  try{await deleteCurrentJob();}catch(e){message(e.message,true);return;}
+  activeJob=null;
   const audio=demoAudio(),scores=[.12,.16,.29,.76,.91,.89,.83,.67,.31,.18,.12];
   const segments=scores.map((s,index)=>({id:index+1,start_seconds:index*2,end_seconds:index*2+4,synthetic_score:s,assessment:s>=.65?"synthetic":s<=.35?"authentic":"inconclusive",evidence:["Simulated fixture score. This generated signal was not evaluated by a trained detector."],quality:{active_energy_ratio:1,clipped_sample_ratio:0}}));
   const exampleScore=(scores[0]*3+scores.at(-1)*3+scores.slice(1,-1).reduce((a,b)=>a+b,0)*2)/24;
@@ -309,7 +308,6 @@ urlSubmit.addEventListener("click", async () => {
   const generation = ++pollGeneration;
 
   try {
-    await deleteCurrentJob();
     $("results").hidden = true;
     $("empty-report").hidden = false;
     report = null;
@@ -386,4 +384,20 @@ checkTextButton.addEventListener("click", async () => {
   }
 });
 
+async function openRetainedReport() {
+  const jobId = new URLSearchParams(location.search).get("job");
+  if (!jobId) return;
+  try {
+    const job = await api(`/api/analyses/${encodeURIComponent(jobId)}`);
+    if (job.status !== "completed" || !job.result) throw new Error("This report is not ready or is no longer retained.");
+    activeJob = job.id;
+    renderReport(job.result, `/api/analyses/${encodeURIComponent(job.id)}/audio`);
+    message("");
+    $("results").scrollIntoView({block:"start"});
+  } catch (error) { message(error.message, true); }
+}
 checkConnection();
+openRetainedReport();
+const requestedDialog = new URLSearchParams(location.search).get("dialog");
+if (requestedDialog === "method") $("nav-method").click();
+if (requestedDialog === "connection") $("nav-connect").click();

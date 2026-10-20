@@ -60,10 +60,28 @@ async def maintenance():
 async def lifespan(app):
     global DETECTOR, CONTENT_ANALYZER
     RUNTIME.mkdir(exist_ok=True)
-    # Sessions are in memory. Delete orphaned files from a previous run.
+    with LOCK:
+        JOBS.clear()
+    # Restore completed local reports that are still inside their retention window.
     for folder in RUNTIME.iterdir():
         if folder.is_dir():
-            shutil.rmtree(folder, ignore_errors=True)
+            report_path = folder / "report.json"
+            audio_path = folder / "audio.wav"
+            try:
+                updated_at = report_path.stat().st_mtime
+                if time.time() - updated_at >= RETENTION_SECONDS or not audio_path.is_file():
+                    raise ValueError("Expired or incomplete analysis")
+                result = json.loads(report_path.read_text(encoding="utf-8"))
+                if result.get("id") != folder.name:
+                    raise ValueError("Invalid analysis ID")
+                JOBS[folder.name] = {
+                    "id": folder.name, "filename": result["filename"], "status": "completed",
+                    "stage": "completed", "progress": 100, "mode": result["mode"],
+                    "created_at": result["created_at"], "updated_at": updated_at,
+                    "result": result, "error": None,
+                }
+            except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError):
+                shutil.rmtree(folder, ignore_errors=True)
     try:
         DETECTOR = load_detector()
     except Exception:
@@ -81,16 +99,16 @@ async def lifespan(app):
     except asyncio.CancelledError:
         pass
     EXECUTOR.shutdown(wait=True)
-    for folder in RUNTIME.iterdir():
-        if folder.is_dir():
-            shutil.rmtree(folder, ignore_errors=True)
 
 
 app = FastAPI(title="VoiceScope Integration API", version="1.0.0", lifespan=lifespan)
 
 
 def public_job(job):
-    return {key: value for key, value in job.items() if key != "updated_at"}
+    value = {key: item for key, item in job.items() if key != "updated_at"}
+    value["expires_at"] = (datetime.fromtimestamp(job["updated_at"] + RETENTION_SECONDS, timezone.utc).isoformat()
+                           if job["status"] in {"completed", "failed"} else None)
+    return value
 
 
 def get_job(job_id):
@@ -328,6 +346,19 @@ async def create_analysis(file: UploadFile = File(...), mode: str = Form("live")
         raise
     finally:
         await file.close()
+
+
+@app.get("/api/analyses")
+def list_analyses():
+    purge_expired()
+    with LOCK:
+        jobs = sorted(JOBS.values(), key=lambda job: job["created_at"], reverse=True)
+        fields = ("id", "filename", "status", "stage", "progress", "mode", "created_at", "expires_at", "error")
+        return {
+            "server_time": datetime.now(timezone.utc).isoformat(),
+            "analyses": [{key: summary[key] for key in fields}
+                         for summary in (public_job(job) for job in jobs)],
+        }
 
 
 @app.get("/api/analyses/{job_id}")
