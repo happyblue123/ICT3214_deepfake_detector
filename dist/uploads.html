@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>VoiceScope | Retained uploads</title>
+  <title>VoiceScope | Analysis History</title>
   <link rel="stylesheet" href="/styles.css">
   <script src="/report.js" defer></script>
   <script src="/uploads.js" defer></script>
@@ -24,30 +24,32 @@
   <div class="workspace-label">SECURITY ANALYTICS</div>
   <nav aria-label="Main navigation">
     <a class="nav-item" href="/"><svg><use href="#i-grid"/></svg>Analyze media</a>
-    <a class="nav-item active" href="/uploads.html" aria-current="page"><svg><use href="#i-file"/></svg>Uploads<span class="nav-indicator"></span></a>
+    <a class="nav-item active" href="/uploads.html" aria-current="page"><svg><use href="#i-file"/></svg>Analysis History<span class="nav-indicator"></span></a>
     <a class="nav-item" href="/?dialog=method"><svg><use href="#i-info"/></svg>How it works</a>
     <a class="nav-item" href="/?dialog=connection"><svg><use href="#i-plug"/></svg>Model connection</a>
   </nav>
   <div class="sidebar-bottom"><div class="project-tag"><span class="project-dot"></span>ICT3214 TEAM PROJECT</div><p>From recording<br>to reviewable evidence.</p></div>
 </aside>
 <div class="app-shell">
-  <header class="topbar"><div class="breadcrumb">Workspace <span>/</span> <strong>Uploads</strong></div><span class="connection-chip connected"><span class="status-dot"></span>Local retention<svg><use href="#i-plug"/></svg></span></header>
+  <header class="topbar"><div class="breadcrumb">Workspace <span>/</span> <strong>Analysis History</strong></div><span class="connection-chip connected"><span class="status-dot"></span>Saved locally<svg><use href="#i-plug"/></svg></span></header>
   <main>
-    <div class="page-heading"><div><div class="eyebrow"><span></span>AUDIO FORENSICS WORKSPACE</div><h1>Previous uploads. <span>Reports within reach.</span></h1><p>Reopen an analysis, review its evidence, or save a copy before it expires.</p></div><div class="heading-seal"><svg><use href="#i-shield"/></svg><span>AUDIO<br>AUTHENTICITY</span></div></div>
+    <div class="page-heading"><div><div class="eyebrow"><span></span>YOUR ANALYSIS WORKSPACE</div><h1>Analysis History. <span>Your results, saved.</span></h1><p>Revisit recordings and checked messages, review their results, or download a report.</p></div><div class="heading-seal"><svg><use href="#i-shield"/></svg><span>REVIEWABLE<br>EVIDENCE</span></div></div>
     <div class="uploads-layout">
       <section class="panel" aria-labelledby="uploads-title">
         <div class="panel-header"><div><span class="step-number">01</span><h2 id="uploads-title">Recent analyses</h2></div><button class="secondary-button" id="refresh-uploads">Refresh</button></div>
-        <p id="uploads-status" class="uploads-status" role="status">Loading retained uploads…</p>
+        <div class="history-controls"><div class="history-filters" role="group" aria-label="Analysis type"><button type="button" data-history-filter="all" aria-pressed="true">All</button><button type="button" data-history-filter="media" aria-pressed="false">Media</button><button type="button" data-history-filter="text" aria-pressed="false">Text checks</button></div><label class="history-search">Search history<input type="search" id="history-search" maxlength="200" placeholder="Filename or message text…"></label></div>
+        <p id="uploads-status" class="uploads-status" role="status">Loading Analysis History…</p>
         <div id="uploads-list" class="uploads-list"></div>
+        <div class="history-pagination"><button class="secondary-button" id="history-previous" disabled>Previous</button><span id="history-page">Page 1</span><button class="secondary-button" id="history-next" disabled>Next</button></div>
       </section>
-      <aside class="pipeline-panel uploads-info" aria-label="Retention information"><div class="eyebrow muted">YOUR LOCAL WORKSPACE</div><h2>Review while<br>it's retained.</h2><ol class="pipeline-steps"><li><span>1</span><div><strong>Open a report</strong><p>Read the assessment and detailed evidence.</p></div></li><li><span>2</span><div><strong>Save a copy</strong><p>Download the readable report or original JSON.</p></div></li><li><span>3</span><div><strong>Watch the timer</strong><p>Each analysis remains for 30 minutes after processing.</p></div></li></ol><div class="pipeline-footer"><svg><use href="#i-info"/></svg><p>Expired analyses disappear automatically. You can delete a completed analysis sooner.</p></div></aside>
+      <aside class="pipeline-panel uploads-info" aria-label="History information"><div class="eyebrow muted">YOUR LOCAL WORKSPACE</div><h2>One place for<br>past checks.</h2><ol class="pipeline-steps"><li><span>1</span><div><strong>Reopen saved results</strong><p>See the original message or recording report without running analysis again.</p></div></li><li><span>2</span><div><strong>Keep a report</strong><p>Download HTML or JSON, or save a PDF from the report preview.</p></div></li><li><span>3</span><div><strong>You control your history</strong><p id="history-retention-policy">Completed analyses stay on this computer until you delete them, including after restarting the app.</p></div></li></ol><div class="pipeline-footer"><svg><use href="#i-info"/></svg><p>Delete removes the saved result and any retained audio from this app. Downloaded copies are kept separately.</p></div></aside>
     </div>
-    <footer class="footer"><span>VoiceScope <span class="footer-dot">/</span> ICT3214 Security Analytics</span><span>Retention begins when analysis completes</span></footer>
+    <footer class="footer"><span>VoiceScope <span class="footer-dot">/</span> ICT3214 Security Analytics</span><span id="history-retention-footer">Saved on this computer until you delete it</span></footer>
   </main>
 </div>
 <dialog id="saved-report-dialog" class="report-export-dialog" aria-labelledby="saved-report-title" aria-describedby="saved-report-help">
-  <div class="dialog-heading"><h2 id="saved-report-title">Retained report</h2><button class="icon-button" id="close-saved-report" aria-label="Close report"><svg><use href="#i-close"/></svg></button></div>
-  <p id="saved-report-help">Review the saved analysis below. The readable report contains no embedded audio.</p>
+  <div class="dialog-heading"><h2 id="saved-report-title">Saved analysis</h2><button class="icon-button" id="close-saved-report" aria-label="Close report"><svg><use href="#i-close"/></svg></button></div>
+  <p id="saved-report-help">Review the saved result below. Opening a report does not run analysis again. Audio is not embedded in exported reports.</p>
   <div class="report-export-toolbar"><button class="primary-button" id="print-saved-report" disabled>Print / Save as PDF</button><button class="secondary-button" id="download-saved-report" disabled>Download HTML report</button><a class="secondary-button" id="open-timeline" href="/">Open audio timeline</a><span id="saved-report-status" role="status"></span></div>
   <iframe id="saved-report-preview" title="Retained VoiceScope report preview" sandbox="allow-same-origin allow-modals"></iframe>
 </dialog>

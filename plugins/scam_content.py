@@ -7,6 +7,7 @@ Settings (put them in the app's .env file):
   WHISPER_MODEL=small               optional; large-v3 is very slow on CPU
 """
 import json
+import logging
 import math
 import os
 import re
@@ -68,7 +69,57 @@ TEXT_SCAM_SYSTEM_PROMPT = textwrap.dedent("""
     PHISHING, NOT_PHISHING, or UNCERTAIN. If a message is a scam but not phishing,
     use NOT_PHISHING for the phishing verdict.
     Use UNCERTAIN when evidence is insufficient or ambiguous. Do not invent details.
+    Keep the reason to two short sentences and include no more than four concise cues.
 """).strip()
+
+
+TEXT_RESPONSE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "scam_verdict": {"type": "string", "enum": ["SCAM", "NOT_SCAM", "UNCERTAIN"]},
+        "phishing_verdict": {"type": "string", "enum": ["PHISHING", "NOT_PHISHING", "UNCERTAIN"]},
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+        "score": {"type": "integer", "minimum": 0, "maximum": 100},
+        "reason": {"type": "string"},
+        "cues": {
+            "type": "array",
+            "maxItems": 8,
+            "items": {
+                "type": "object",
+                "properties": {"category": {"type": "string"}, "text": {"type": "string"}},
+                "required": ["category", "text"],
+            },
+        },
+    },
+    "required": ["scam_verdict", "phishing_verdict", "confidence", "score", "reason", "cues"],
+}
+logger = logging.getLogger("voicescope.content")
+
+
+class _IncompleteTextResponse(ValueError):
+    """Only incomplete/invalid JSON is eligible for the single content retry."""
+
+
+def _read_text_response(response):
+    candidates = response.candidates or []
+    if not candidates:
+        raise ValueError("Text classifier returned no candidate; the request may have been blocked.")
+    reason = candidates[0].finish_reason
+    finish = getattr(reason, "value", reason)
+    if finish == "MAX_TOKENS":
+        raise _IncompleteTextResponse("Response reached the output limit (MAX_TOKENS).")
+    if finish != "STOP":
+        raise ValueError(f"Text classifier did not complete normally (finish reason: {finish or 'unknown'}).")
+    raw = response.text
+    if not isinstance(raw, str) or not raw.strip():
+        raise _IncompleteTextResponse("Response contained no JSON text.")
+    try:
+        result = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise _IncompleteTextResponse("Response contained malformed or truncated JSON.") from exc
+    if not isinstance(result, dict) or not set(TEXT_RESPONSE_SCHEMA["required"]).issubset(result):
+        raise ValueError("Text classifier returned an invalid result or missing required fields.")
+    return result
 
 
 def parse_reason(reason):
@@ -113,21 +164,30 @@ class ScamContentAnalyzer:
         return json.loads(response.text)
 
     def classify_text(self, text):
-        response = self.client.models.generate_content(
-            model=self.gemini_model,
-            contents=f"Classify this submitted message:\n<message>\n{text}\n</message>",
-            config=types.GenerateContentConfig(
+        for attempt, output_limit in enumerate((4096, 8192), start=1):
+            config = types.GenerateContentConfig(
                 system_instruction=TEXT_SCAM_SYSTEM_PROMPT,
                 response_mime_type="application/json",
-                max_output_tokens=800,
-            ),
-        )
-        try:
-            result = json.loads(response.text)
-        except (TypeError, json.JSONDecodeError) as exc:
-            raise ValueError("Text classifier returned invalid JSON.") from exc
-        if not isinstance(result, dict):
-            raise ValueError("Text classifier returned an invalid result.")
+                response_json_schema=TEXT_RESPONSE_SCHEMA,
+                max_output_tokens=output_limit,
+            )
+            # This model's output budget also includes thinking tokens. A low
+            # thinking level leaves room for its short structured answer.
+            if self.gemini_model.removeprefix("models/") == "gemini-3.8-flash":
+                config.thinking_config = types.ThinkingConfig(thinking_level=types.ThinkingLevel.LOW)
+            response = self.client.models.generate_content(
+                model=self.gemini_model,
+                contents=f"Classify this submitted message:\n<message>\n{text}\n</message>",
+                config=config,
+            )
+            try:
+                result = _read_text_response(response)
+                break
+            except _IncompleteTextResponse as exc:
+                if attempt == 2:
+                    raise ValueError(f"Text classifier could not return complete JSON after two attempts. {exc}") from exc
+                logger.warning("Incomplete text-classifier response: %s Retrying once with a larger output budget.", exc)
+        # Quota/network errors and safety blocks are not retried by this loop.
         scam_verdict = str(result.get("scam_verdict", "UNCERTAIN")).upper()
         phishing_verdict = str(result.get("phishing_verdict", "UNCERTAIN")).upper()
         if scam_verdict not in {"SCAM", "NOT_SCAM", "UNCERTAIN"}:
@@ -143,6 +203,8 @@ class ScamContentAnalyzer:
         score = raw_score
         if not math.isfinite(confidence) or not 0 <= confidence <= 1 or not 0 <= score <= 100:
             raise ValueError("Text classifier returned an invalid score.")
+        if not isinstance(result["reason"], str):
+            raise ValueError("Text classifier returned an invalid explanation.")
         cues = result.get("cues", [])
         if not isinstance(cues, list) or any(
                 not isinstance(cue, dict)

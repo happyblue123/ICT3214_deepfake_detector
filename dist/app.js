@@ -43,6 +43,7 @@ async function checkConnection() {
     const h = await api("/api/health");
     if (h.status !== "ok" || typeof h.detector_connected !== "boolean") throw new Error("Unsupported API response");
     health = h;
+    if ($("history-policy-note")) $("history-policy-note").textContent = h.limits?.retention_minutes ? `Analyses are kept locally for ${h.limits.retention_minutes} minutes after processing` : "Analysis History is kept on this computer until you delete it";
     $("connection-label").textContent = h.detector_connected ? "Detector connected" : "API ready · model pending";
     $("connection").classList.add("connected");
     if (!h.detector_connected && !report) message("The trained detector is awaiting connection. Explore the example, or enable demo mode to test an upload.");
@@ -167,7 +168,7 @@ function renderReport(value,audioSource) {
   if(objectUrl){URL.revokeObjectURL(objectUrl);objectUrl=null;}
   if(audioSource.startsWith("blob:")) objectUrl=audioSource;
   $("audio-player").src=audioSource;
-  $("playback-note").textContent=value.id==="browser-example" ? "Generated demonstration signal · not speech or a real detector evaluation." : "Replay the normalized audio track. Audio expires after 30 minutes.";
+  $("playback-note").textContent=value.id==="browser-example" ? "Generated demonstration signal · not speech or a real detector evaluation." : "Replay the normalized audio track saved with this analysis.";
   $("region-list").innerHTML=value.suspicious_regions.length ? value.suspicious_regions.map((r,index)=>`<button class="region-row" data-segment="${r.segment_ids[0]}"><span class="region-number">${index+1}</span><span><strong>${esc(rangeLabel(r))}</strong><small>${r.segment_ids.length} elevated windows · peak synthetic score</small></span><span class="region-score">${scoreLabel(r.peak_score)}</span>${icon("arrow")}</button>`).join("") : `<div class="empty-state">${icon("shield")}<div><strong>No windows exceeded the threshold</strong><p>This does not guarantee authenticity. Review unscored windows and overall coverage.</p></div></div>`;
   $("region-list").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{selectWindow(Number(b.dataset.segment));$("evidence-detail").scrollIntoView({behavior:"smooth",block:"center"});}));
   $("transcript-content").innerHTML=value.transcript.length ? value.transcript.map(t=>`<div class="transcript-line"><button data-time="${t.start_seconds}" aria-label="Seek to ${esc(timeLabel(t.start_seconds))}">${esc(timeLabel(t.start_seconds))}</button><span>${esc(t.text)}</span></div>`).join("") : `<div class="empty-state">${icon("file")}<div><strong>${isDemo ? "Not run in demo mode" : scam.status==="failed" ? "Content pipeline unavailable" : "Waiting for the content pipeline"}</strong><p>${isDemo ? "Transcription and scam analysis are skipped. Turn off demo mode and analyze again to run them." : "Timestamped transcription and categories such as urgency, impersonation, and credential requests will appear when the team’s service is connected."}</p><p>Audio authenticity and scam risk remain separate assessments.</p></div></div>`;
@@ -270,7 +271,7 @@ $("load-example").addEventListener("click",async ()=>{
 
 function openDialog(title,html) {$("dialog-title").textContent=title;$("dialog-content").innerHTML=html;$("info-dialog").showModal();}
 function showConnection() {
-  openDialog("Local model connection",`<p>The frontend and Python API run together on this computer. Uploads, results, and playback use this dashboard’s local address.</p><div id="api-status">${health ? (health.detector_connected ? "Local API and detector connected." : "Local API connected. Trained detector awaiting integration.") : "Local API unavailable. Start the server using the setup guide."}</div><div class="dialog-actions"><button class="primary-button" id="recheck-api">Check local API</button></div><h3>Detector handoff</h3><p>Member 1 places the adapter in <code>plugins/</code> and the checkpoint in <code>models/</code>. Set <code>DETECTOR_PLUGIN=plugins.your_detector:create_detector</code> in your local <code>.env</code> file and restart the app.</p><h3>Content handoff</h3><p>Members 2–4 provide the timestamped transcript and scam-cue result through <code>CONTENT_PLUGIN</code>. See <code>docs/INTEGRATION.md</code> for both contracts.</p><p>Files stay on this computer for 30 minutes or until you delete the analysis.</p>`);
+  openDialog("Local model connection",`<p>The frontend and Python API run together on this computer. Uploads, results, and playback use this dashboard’s local address.</p><div id="api-status">${health ? (health.detector_connected ? "Local API and detector connected." : "Local API connected. Trained detector awaiting integration.") : "Local API unavailable. Start the server using the setup guide."}</div><div class="dialog-actions"><button class="primary-button" id="recheck-api">Check local API</button></div><h3>Detector handoff</h3><p>Member 1 places the adapter in <code>plugins/</code> and the checkpoint in <code>models/</code>. Set <code>DETECTOR_PLUGIN=plugins.your_detector:create_detector</code> in your local <code>.env</code> file and restart the app.</p><h3>Content handoff</h3><p>Members 2–4 provide the timestamped transcript and scam-cue result through <code>CONTENT_PLUGIN</code>. See <code>docs/INTEGRATION.md</code> for both contracts.</p><p>Completed media and message checks are saved in Analysis History across app restarts. They stay until you delete them, unless timed retention is configured.</p>`);
   $("recheck-api").addEventListener("click",async ()=>{
     $("recheck-api").disabled=true;
     await checkConnection();
@@ -371,9 +372,7 @@ checkTextButton.addEventListener("click", async () => {
       body: JSON.stringify({ text }),
       signal: AbortSignal.timeout(60000),
     });
-    const scamLabels = {SCAM: "Likely scam", NOT_SCAM: "No scam indicators found", UNCERTAIN: "Uncertain"};
-    const phishingLabels = {PHISHING: "Likely phishing", NOT_PHISHING: "No phishing indicators found", UNCERTAIN: "Uncertain"};
-    textCheckResult.innerHTML = `<div class="text-check-verdicts"><div><small>SCAM ASSESSMENT</small><strong>${esc(scamLabels[result.scam_verdict] || "Uncertain")}</strong></div><div><small>PHISHING ASSESSMENT</small><strong>${esc(phishingLabels[result.phishing_verdict] || "Uncertain")}</strong></div><div><small>MODEL SCORE · NOT A PROBABILITY</small><strong>${esc(result.score)}/100</strong></div><div><small>MODEL CONFIDENCE · NOT CALIBRATED</small><strong>${Math.round(result.confidence * 100)}%</strong></div></div><p class="text-check-reason">${esc(result.reason)}</p>${result.cues.length ? `<ul class="text-check-cues">${result.cues.map(cue => `<li><strong>${esc(cue.category)}:</strong> ${esc(cue.text)}</li>`).join("")}</ul>` : ""}<small class="text-check-disclaimer">${esc(result.disclaimer)}</small>`;
+    renderTextCheck(result, result.history_id);
   } catch (error) {
     textCheckResult.classList.add("error");
     textCheckResult.textContent = error.message;
@@ -384,12 +383,27 @@ checkTextButton.addEventListener("click", async () => {
   }
 });
 
+function renderTextCheck(result, historyId) {
+  const scamLabels = {SCAM: "Likely scam", NOT_SCAM: "No scam indicators found", UNCERTAIN: "Uncertain"};
+  const phishingLabels = {PHISHING: "Likely phishing", NOT_PHISHING: "No phishing indicators found", UNCERTAIN: "Uncertain"};
+  textCheckResult.hidden = false;
+  textCheckResult.className = "text-check-result";
+  textCheckResult.innerHTML = `<div class="text-check-verdicts"><div><small>SCAM ASSESSMENT</small><strong>${esc(scamLabels[result.scam_verdict] || "Uncertain")}</strong></div><div><small>PHISHING ASSESSMENT</small><strong>${esc(phishingLabels[result.phishing_verdict] || "Uncertain")}</strong></div><div><small>MODEL SCORE · NOT A PROBABILITY</small><strong>${esc(result.score)}/100</strong></div><div><small>MODEL CONFIDENCE · NOT CALIBRATED</small><strong>${Math.round(result.confidence * 100)}%</strong></div></div><p class="text-check-reason">${esc(result.reason)}</p>${result.cues.length ? `<ul class="text-check-cues">${result.cues.map(cue => `<li><strong>${esc(cue.category)}:</strong> ${esc(cue.text)}</li>`).join("")}</ul>` : ""}<small class="text-check-disclaimer">${esc(result.disclaimer)}</small>${historyId ? `<p class="text-history-link">Saved to Analysis History. <a href="/uploads.html">View past analyses</a></p>` : ""}`;
+}
+
 async function openRetainedReport() {
   const jobId = new URLSearchParams(location.search).get("job");
   if (!jobId) return;
   try {
     const job = await api(`/api/analyses/${encodeURIComponent(jobId)}`);
     if (job.status !== "completed" || !job.result) throw new Error("This report is not ready or is no longer retained.");
+    if (job.kind === "text") {
+      scamText.value = job.result.input_text;
+      renderTextCheck(job.result.text_analysis, job.id);
+      checkTextButton.disabled = false;
+      textCheckResult.scrollIntoView({block:"start"});
+      return;
+    }
     activeJob = job.id;
     renderReport(job.result, `/api/analyses/${encodeURIComponent(job.id)}/audio`);
     message("");

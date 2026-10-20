@@ -15,7 +15,7 @@ import time
 import uuid
 from urllib.parse import urlsplit
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -26,7 +26,9 @@ from .pipeline import MediaError, analyze, ffmpeg_executable, normalize_media
 ROOT = Path(__file__).resolve().parents[1]
 RUNTIME = ROOT / ".runtime"
 MAX_UPLOAD = 100 * 1024 * 1024
-RETENTION_SECONDS = 30 * 60
+RETENTION_SECONDS = int(os.getenv("HISTORY_RETENTION_MINUTES", "0")) * 60
+if RETENTION_SECONDS < 0:
+    raise ValueError("HISTORY_RETENTION_MINUTES must be zero or a positive integer.")
 EXTENSIONS = {".wav", ".mp3", ".m4a", ".flac", ".ogg", ".webm", ".mp4", ".mov", ".mkv"}
 URL_HOSTS = ("youtube.com", "youtu.be", "facebook.com", "fb.watch", "instagram.com", "tiktok.com")
 JOBS: dict[str, dict] = {}
@@ -43,11 +45,64 @@ class TextAnalysisRequest(BaseModel):
 
 
 def purge_expired():
+    if not RETENTION_SECONDS:
+        return
     with LOCK:
         for job_id, job in list(JOBS.items()):
             if job["status"] in {"completed", "failed"} and time.time() - job["updated_at"] > RETENTION_SECONDS:
-                shutil.rmtree(RUNTIME / job_id, ignore_errors=True)
+                remove_analysis_files(job_id)
                 del JOBS[job_id]
+
+
+def remove_analysis_files(job_id):
+    directory = RUNTIME / job_id
+    if directory.resolve().parent != RUNTIME.resolve():
+        raise ValueError("Analysis files must be inside the local history directory.")
+    shutil.rmtree(directory, ignore_errors=True)
+
+
+def store_report(report):
+    directory = RUNTIME / report["id"]
+    if directory.resolve().parent != RUNTIME.resolve():
+        raise ValueError("Invalid history directory.")
+    directory.mkdir(parents=True, exist_ok=True)
+    temporary = directory / "report.json.tmp"
+    temporary.write_text(json.dumps(report, ensure_ascii=False, allow_nan=False), encoding="utf-8")
+    temporary.replace(directory / "report.json")
+
+
+def restore_reports():
+    """Restore saved media and text results without rerunning any models."""
+    RUNTIME.mkdir(exist_ok=True)
+    with LOCK:
+        JOBS.clear()
+        for folder in RUNTIME.iterdir():
+            if not folder.is_dir() or folder.is_symlink():
+                continue
+            try:
+                path = folder / "report.json"
+                updated_at = path.stat().st_mtime
+                if RETENTION_SECONDS and time.time() - updated_at >= RETENTION_SECONDS:
+                    raise ValueError("Expired analysis")
+                result = json.loads(path.read_text(encoding="utf-8"))
+                if not isinstance(result, dict):
+                    raise ValueError("Invalid saved report")
+                if result.get("id") != folder.name or result.get("kind", "media") not in {"media", "text"}:
+                    raise ValueError("Invalid analysis identity")
+                if not all(isinstance(result.get(key), str) for key in ("filename", "mode", "created_at")):
+                    raise ValueError("Invalid saved metadata")
+                if result.get("kind") == "text":
+                    if not isinstance(result.get("input_text"), str):
+                        raise ValueError("Missing saved message")
+                    validate_text_analysis(result.get("text_analysis"))
+                JOBS[folder.name] = {
+                    "id": folder.name, "kind": result.get("kind", "media"),
+                    "filename": result["filename"], "status": "completed", "stage": "completed",
+                    "progress": 100, "mode": result["mode"], "created_at": result["created_at"],
+                    "updated_at": updated_at, "result": result, "error": None,
+                }
+            except (OSError, ValueError, KeyError, TypeError):
+                remove_analysis_files(folder.name)
 
 
 async def maintenance():
@@ -59,29 +114,7 @@ async def maintenance():
 @asynccontextmanager
 async def lifespan(app):
     global DETECTOR, CONTENT_ANALYZER
-    RUNTIME.mkdir(exist_ok=True)
-    with LOCK:
-        JOBS.clear()
-    # Restore completed local reports that are still inside their retention window.
-    for folder in RUNTIME.iterdir():
-        if folder.is_dir():
-            report_path = folder / "report.json"
-            audio_path = folder / "audio.wav"
-            try:
-                updated_at = report_path.stat().st_mtime
-                if time.time() - updated_at >= RETENTION_SECONDS or not audio_path.is_file():
-                    raise ValueError("Expired or incomplete analysis")
-                result = json.loads(report_path.read_text(encoding="utf-8"))
-                if result.get("id") != folder.name:
-                    raise ValueError("Invalid analysis ID")
-                JOBS[folder.name] = {
-                    "id": folder.name, "filename": result["filename"], "status": "completed",
-                    "stage": "completed", "progress": 100, "mode": result["mode"],
-                    "created_at": result["created_at"], "updated_at": updated_at,
-                    "result": result, "error": None,
-                }
-            except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError):
-                shutil.rmtree(folder, ignore_errors=True)
+    restore_reports()
     try:
         DETECTOR = load_detector()
     except Exception:
@@ -106,8 +139,14 @@ app = FastAPI(title="VoiceScope Integration API", version="1.0.0", lifespan=life
 
 def public_job(job):
     value = {key: item for key, item in job.items() if key != "updated_at"}
+    value["kind"] = job.get("kind", "media")
+    result = job.get("result") or {}
+    value["audio_available"] = value["kind"] == "media" and (RUNTIME / job["id"] / "audio.wav").is_file()
+    value["preview"] = " ".join(result.get("input_text", "").split())[:180]
+    value["scam_verdict"] = (result.get("text_analysis") or {}).get("scam_verdict")
+    value["phishing_verdict"] = (result.get("text_analysis") or {}).get("phishing_verdict")
     value["expires_at"] = (datetime.fromtimestamp(job["updated_at"] + RETENTION_SECONDS, timezone.utc).isoformat()
-                           if job["status"] in {"completed", "failed"} else None)
+                           if RETENTION_SECONDS and job["status"] in {"completed", "failed"} else None)
     return value
 
 
@@ -115,7 +154,7 @@ def get_job(job_id):
     purge_expired()
     with LOCK:
         if job_id not in JOBS:
-            raise HTTPException(404, "Analysis not found or its 30-minute retention period has expired.")
+            raise HTTPException(404, "Analysis not found. It may have been deleted or its configured retention period expired.")
         return JOBS[job_id]
 
 
@@ -184,7 +223,7 @@ def process_job(job_id, source, mode):
         detector = DemoDetector() if mode == "demo" else DETECTOR
         report = analyze(samples, detector, lambda stage, percent: set_progress(job_id, stage, percent))
         set_progress(job_id, "reporting", 90)
-        report.update(schema_version="1.0", id=job_id, mode=mode,
+        report.update(schema_version="1.0", id=job_id, kind="media", mode=mode,
                       filename=JOBS[job_id]["filename"], created_at=JOBS[job_id]["created_at"],
                       model={"name": str(getattr(detector, "name", "Team detector")),
                              "version": str(getattr(detector, "version", "unspecified"))},
@@ -198,7 +237,8 @@ def process_job(job_id, source, mode):
                 logger.exception("Content analysis failed for %s", job_id)
                 report["scam_analysis"]["status"] = "failed"
                 report["warnings"].append("Transcription/scam analysis failed. Deepfake results remain available.")
-        (source.parent / "report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+        report["content_model"] = str(getattr(CONTENT_ANALYZER, "gemini_model", "Not recorded"))
+        store_report(report)
         with LOCK:
             JOBS[job_id].update(status="completed", stage="completed", progress=100,
                                 result=report, updated_at=time.time())
@@ -279,7 +319,8 @@ def health():
             "model": str(getattr(DETECTOR, "name", "Not connected")),
             "content_connected": CONTENT_ANALYZER is not None,
             "limits": {"max_upload_bytes": MAX_UPLOAD, "max_duration_seconds": 600,
-                       "retention_minutes": 30}, "demo_available": True}
+                       "retention_minutes": RETENTION_SECONDS // 60 if RETENTION_SECONDS else None},
+            "history_persistent": True, "demo_available": True}
 
 
 @app.post("/api/text-analysis")
@@ -294,13 +335,39 @@ async def analyze_text(payload: TextAnalysisRequest):
             503,
             "Text scam analysis is unavailable. Configure CONTENT_PLUGIN and GEMINI_API_KEY, then restart the app.",
         )
+    purge_expired()
+    with LOCK:
+        if sum(job["status"] not in {"completed", "failed"} for job in JOBS.values()) >= 4:
+            raise HTTPException(429, "Analysis capacity reached. Please try again shortly.")
+        job_id = uuid.uuid4().hex
+        created_at = datetime.now(timezone.utc).isoformat()
+        JOBS[job_id] = {"id": job_id, "kind": "text", "filename": "Message check",
+                        "status": "processing", "stage": "checking", "progress": 0,
+                        "mode": "live", "created_at": created_at, "updated_at": time.time(),
+                        "result": None, "error": None}
     try:
-        result = await asyncio.wrap_future(
-            EXECUTOR.submit(CONTENT_ANALYZER.classify_text, text)
-        )
-        return validate_text_analysis(result)
+        result = await asyncio.wrap_future(EXECUTOR.submit(CONTENT_ANALYZER.classify_text, text))
+        checked = validate_text_analysis(result)
+        report = {"schema_version": "1.0", "id": job_id, "kind": "text", "mode": "live",
+                  "filename": "Message check", "created_at": created_at, "input_text": text,
+                  "model": {"name": "Gemini scam and phishing classifier",
+                            "version": str(getattr(CONTENT_ANALYZER, "gemini_model", "Not recorded"))},
+                  "text_analysis": checked}
+        store_report(report)
+        with LOCK:
+            JOBS[job_id].update(status="completed", stage="completed", progress=100,
+                                result=report, updated_at=time.time())
+        return {**checked, "history_id": job_id, "created_at": created_at}
     except Exception as exc:
+        remove_analysis_files(job_id)
+        with LOCK:
+            JOBS.pop(job_id, None)
         logger.exception("Text scam analysis failed")
+        if getattr(exc, "code", None) in (503, 504):
+            raise HTTPException(
+                503,
+                "The scam-analysis service is temporarily busy or timed out. Please try again shortly.",
+            ) from exc
         raise HTTPException(502, "Text analysis failed. Check the content plugin and backend logs.") from exc
 
 
@@ -315,10 +382,10 @@ async def create_analysis(file: UploadFile = File(...), mode: str = Form("live")
         raise HTTPException(415, "Unsupported file. Use WAV, MP3, M4A, FLAC, OGG, WEBM, MP4, MOV, or MKV.")
     purge_expired()
     with LOCK:
-        if sum(job["status"] not in {"completed", "failed"} for job in JOBS.values()) >= 4 or len(JOBS) >= 64:
-            raise HTTPException(429, "Analysis capacity reached. Delete a previous analysis or try again shortly.")
+        if sum(job["status"] not in {"completed", "failed"} for job in JOBS.values()) >= 4:
+            raise HTTPException(429, "Analysis capacity reached. Please try again shortly.")
         job_id = uuid.uuid4().hex
-        JOBS[job_id] = {"id": job_id, "filename": (file.filename or "upload")[:200],
+        JOBS[job_id] = {"id": job_id, "kind": "media", "filename": (file.filename or "upload")[:200],
                         "status": "uploading", "stage": "uploading", "progress": 0,
                         "mode": mode, "created_at": datetime.now(timezone.utc).isoformat(),
                         "updated_at": time.time(), "result": None, "error": None}
@@ -349,15 +416,25 @@ async def create_analysis(file: UploadFile = File(...), mode: str = Form("live")
 
 
 @app.get("/api/analyses")
-def list_analyses():
+def list_analyses(kind: str = "all", q: str = Query(default="", max_length=200),
+                  limit: int = Query(default=100, ge=1, le=500), offset: int = Query(default=0, ge=0)):
     purge_expired()
+    if kind not in {"all", "media", "text"}:
+        raise HTTPException(422, "History type must be all, media, or text.")
     with LOCK:
         jobs = sorted(JOBS.values(), key=lambda job: job["created_at"], reverse=True)
-        fields = ("id", "filename", "status", "stage", "progress", "mode", "created_at", "expires_at", "error")
+        query = q.strip().casefold()
+        jobs = [job for job in jobs if (kind == "all" or job.get("kind", "media") == kind)
+                and (not query or query in (job["filename"] + " " +
+                     (job.get("result") or {}).get("input_text", "")).casefold())]
+        fields = ("id", "kind", "filename", "status", "stage", "progress", "mode", "created_at",
+                  "expires_at", "error", "audio_available", "preview", "scam_verdict", "phishing_verdict")
         return {
             "server_time": datetime.now(timezone.utc).isoformat(),
+            "retention_minutes": RETENTION_SECONDS // 60 if RETENTION_SECONDS else None,
+            "total": len(jobs), "offset": offset, "limit": limit,
             "analyses": [{key: summary[key] for key in fields}
-                         for summary in (public_job(job) for job in jobs)],
+                         for summary in (public_job(job) for job in jobs[offset:offset + limit])],
         }
 
 
@@ -369,8 +446,11 @@ def analysis_status(job_id: str):
 
 @app.get("/api/analyses/{job_id}/audio")
 def audio_file(job_id: str):
-    if get_job(job_id)["status"] != "completed":
+    job = get_job(job_id)
+    if job["status"] != "completed":
         raise HTTPException(409, "Audio is available after analysis completes.")
+    if job.get("kind") == "text" or not (RUNTIME / job_id / "audio.wav").is_file():
+        raise HTTPException(404, "No retained audio is available for this analysis.")
     return FileResponse(RUNTIME / job_id / "audio.wav", media_type="audio/wav")
 
 
@@ -388,7 +468,7 @@ def delete_analysis(job_id: str):
         job = get_job(job_id)
         if job["status"] not in {"completed", "failed"}:
             raise HTTPException(409, "Wait for processing to finish before deleting this analysis.")
-        shutil.rmtree(RUNTIME / job_id, ignore_errors=True)
+        remove_analysis_files(job_id)
         del JOBS[job_id]
 
 
@@ -404,10 +484,10 @@ async def create_analysis_from_url(payload: dict):
 
     purge_expired()
     with LOCK:
-        if sum(job["status"] not in {"completed", "failed"} for job in JOBS.values()) >= 4 or len(JOBS) >= 64:
+        if sum(job["status"] not in {"completed", "failed"} for job in JOBS.values()) >= 4:
             raise HTTPException(429, "Analysis capacity reached.")
         job_id = uuid.uuid4().hex
-        JOBS[job_id] = {"id": job_id, "filename": url[:200],
+        JOBS[job_id] = {"id": job_id, "kind": "media", "filename": url[:200],
                         "status": "downloading", "stage": "downloading", "progress": 5,
                         "mode": mode, "created_at": datetime.now(timezone.utc).isoformat(),
                         "updated_at": time.time(), "result": None, "error": None}

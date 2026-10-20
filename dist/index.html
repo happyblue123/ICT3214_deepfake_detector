@@ -29,7 +29,7 @@
   <div class="workspace-label">SECURITY ANALYTICS</div>
   <nav aria-label="Main navigation">
     <button class="nav-item active" id="nav-analyze"><svg><use href="#i-grid"/></svg>Analyze media<span class="nav-indicator"></span></button>
-    <a href="/uploads.html" class="nav-item" id="nav-history"><svg><use href="#i-file"/></svg>Uploads</a>
+    <a href="/uploads.html" class="nav-item" id="nav-history"><svg><use href="#i-file"/></svg>Analysis History</a>
     <button class="nav-item" id="nav-method"><svg><use href="#i-info"/></svg>How it works</button>
     <button class="nav-item" id="nav-connect"><svg><use href="#i-plug"/></svg>Model connection</button>
   </nav>
@@ -62,7 +62,7 @@
       <div class="panel-header"><div><span class="step-number">02</span><h2 id="text-check-title">Check a message for scams or phishing</h2></div><span class="subtle-label">TEXT ANALYSIS</span></div>
       <label class="text-check-label" for="scam-text">Paste a suspicious SMS, email, or chat message</label>
       <textarea id="scam-text" class="text-check-input" rows="5" maxlength="10000" placeholder="Paste the message here…"></textarea>
-      <div class="text-check-actions"><small>Up to 10,000 characters. The text is sent to the configured Gemini service for analysis. Do not include passwords, one-time codes, or sensitive personal information.</small><button class="primary-button" id="check-text" disabled>Check message<svg><use href="#i-arrow"/></svg></button></div>
+      <div class="text-check-actions"><small>Up to 10,000 characters. The text is sent to the configured Gemini service for analysis. Successful checks are saved locally in Analysis History. Do not include passwords, one-time codes, or sensitive personal information.</small><button class="primary-button" id="check-text" disabled>Check message<svg><use href="#i-arrow"/></svg></button></div>
       <div class="text-check-result" id="text-check-result" role="status" aria-live="polite" hidden></div>
     </section>
     <section class="empty-report" id="empty-report"><div class="mini-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div><h2>The evidence starts here.</h2><p>Your assessment, scored timeline, and detailed report will appear after analysis.</p></div><span class="waiting-tag"><span></span>AWAITING RECORDING</span></section>
@@ -74,7 +74,7 @@
       <div class="detail-grid"><section class="panel" aria-labelledby="regions-title"><div class="panel-header"><div><span class="step-number">04</span><h2 id="regions-title">Standout regions</h2></div><span class="subtle-label">LOCALIZED EVIDENCE</span></div><div id="region-list"></div><p class="panel-footnote">Ranges merge overlapping elevated windows. Their boundaries include context and do not mark exact edits.</p></section><section class="panel" aria-labelledby="transcript-title"><div class="panel-header"><div><span class="step-number">05</span><h2 id="transcript-title">Transcript & scam cues</h2></div></div><div id="transcript-content"></div><div id="scam-cues"></div></section></div>
       <details class="method-details"><summary>Processing details & interpretation limits<svg><use href="#i-info"/></svg></summary><div id="processing-details"></div><ul id="warnings"></ul></details>
     </section>
-    <footer class="footer"><span>VoiceScope <span class="footer-dot">/</span> ICT3214 Security Analytics</span><span>Uploads stay on this computer · retained for 30 minutes</span></footer>
+    <footer class="footer"><span>VoiceScope <span class="footer-dot">/</span> ICT3214 Security Analytics</span><span id="history-policy-note">Analysis History is kept on this computer until you delete it</span></footer>
   </main>
 </div>
 <dialog id="info-dialog"><div class="dialog-heading"><h2 id="dialog-title"></h2><button class="icon-button" id="close-dialog" aria-label="Close dialog"><svg><use href="#i-close"/></svg></button></div><div id="dialog-content"></div></dialog>

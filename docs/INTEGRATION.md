@@ -57,9 +57,10 @@ The current PoC runs the content adapter after deepfake inference. The proposal 
 | `GET /api/health` | Connectivity, model availability, content availability, limits |
 | `POST /api/analyses` | Multipart fields `file` and `mode` (`live` default, or explicit `demo`); returns HTTP 202 with job ID |
 | `POST /api/analyses/from-url` | JSON fields `url` and `mode`; downloads public HTTPS media from TikTok, YouTube, Facebook, or Instagram and returns HTTP 202 |
-| `POST /api/text-analysis` | JSON field `text` (1–10,000 characters); returns separate scam and phishing verdicts using `CONTENT_PLUGIN.classify_text` |
+| `POST /api/text-analysis` | JSON field `text` (1–10,000 characters); returns scam/phishing verdicts plus `history_id` and `created_at`; saves successful checks using `CONTENT_PLUGIN.classify_text` |
+| `GET /api/analyses` | Combined media/text history with `kind=all\|media\|text`, optional `q` (filename or full message), `limit` (1–500) and `offset`; returns `total` and summaries |
 | `GET /api/analyses/{id}` | Status, stage, progress, error, and result when completed |
-| `GET /api/analyses/{id}/audio` | Normalized WAV, available after completion |
+| `GET /api/analyses/{id}/audio` | Retained normalized WAV for completed media; 404 for text or missing audio |
 | `GET /api/analyses/{id}/report` | Full JSON report download |
 | `DELETE /api/analyses/{id}` | Removes completed/failed analysis and files; HTTP 204 |
 
@@ -68,6 +69,8 @@ Statuses: `uploading`, `downloading`, `queued`, `processing`, `completed`, `fail
 Errors include 400 for empty files, 413 for files beyond the size limit, 415 for unsupported extensions, 422 for unsupported modes or links, 429 for queue capacity, and 503 for unavailable real detector. Decoding, duration, download, and inference errors appear in job status after HTTP 202. File validation uses extension allowlisting plus actual decoding; MIME metadata is not treated as proof of valid media. File uploads and link downloads begin only after the user starts analysis.
 
 Text analysis returns `scam_verdict` (`SCAM`, `NOT_SCAM`, or `UNCERTAIN`), `phishing_verdict` (`PHISHING`, `NOT_PHISHING`, or `UNCERTAIN`), a model score, confidence, reason, and evidence cues. It requires the configured content plugin and Gemini API key. Submitted text is sent to Gemini; users should not paste passwords, one-time codes, or sensitive personal information. The model score is not a calibrated probability, and a benign result cannot prove a message is safe.
+
+History records have `kind: "media"` or `kind: "text"` (older reports without `kind` are treated as media). Text reports contain the original `input_text`, validated `text_analysis`, model identifier, ID and UTC timestamp. Reopening or exporting a record reads the stored result and does not call a model. Successful checks return `history_id` linking to the same record. Failed text requests leave no saved result. Summary responses include `audio_available`, a short text preview and text verdicts; the full message is available from the individual result/report endpoint. The list is paginated and can search the full saved message, including text beyond its preview.
 
 ## Report fields
 
@@ -81,13 +84,13 @@ Windows at or above 0.65 are merged when their time ranges overlap/touch. A regi
 
 ## Local runtime and teammate setup
 
-Keep the local server at `127.0.0.1` for development. It serves the frontend and API on port 8000. Use **one process**: multiple Uvicorn workers would each have separate job metadata. The queue is bounded to four active/uploading/queued jobs and 64 total retained jobs. Files and job metadata are purged after 30 minutes from completion/failure; periodic cleanup runs every minute. Original uploads are deleted after normalization; normalized audio and reports remain temporarily for replay/export. Restart/shutdown removes stored files. Results and uploads are not durable.
+Keep the local server at `127.0.0.1` for development. It serves the frontend and API on port 8000. Use **one process**: multiple Uvicorn workers would each have separate job metadata. The queue is bounded to four active jobs across media and text checks; saved completed records do not consume this queue limit. Completed reports and normalized audio remain in `.runtime/` across native app restarts. The default `HISTORY_RETENTION_MINUTES=0` keeps them until manually deleted. A positive number enables timed expiry from completion/failure; cleanup runs every minute and on access, and startup discards expired records. Health/list responses return `retention_minutes: null` when expiry is disabled and each record has `expires_at: null`. Restart after changing the setting. Original uploaded media is removed after normalization. Deleting a record removes its saved report/message and any retained audio. Completed reports are restored without re-analysis; interrupted jobs and failed jobs are not restored. History is local storage, not a backup or an account-isolated multi-user service.
 
 The frontend and API run together on localhost. Native startup uses `python -m backend.run`; Docker startup uses `docker compose up --build -d`. The browser uses relative API paths and has no remote API URL setting. Cross-origin configuration is unnecessary. The native launcher binds to `127.0.0.1`; Compose publishes its container port only on `127.0.0.1`.
 
 Put adapter modules in `plugins/`, pinned model dependencies in `requirements-model.txt`, and checkpoints/processors in `models/`. Configure plugin factories in `.env`. Resolve model files with `Path(os.environ.get("MODEL_DIR", "models"))`: native startup uses the project directory, while Docker supplies `/app/models` as a read-only mount. Use local model assets; Hugging Face offline settings default to enabled.
 
-The Docker image uses a CPU Python environment until the model owner supplies the actual runtime dependencies. Its root filesystem is read-only, with writable temporary directories at `/app/.runtime` and `/tmp`. Model code must load its assets from local files and direct any necessary temporary caches to `/tmp`. Docker has not been run on the authoring computer because Docker is unavailable there.
+The Docker image uses a CPU Python environment until the model owner supplies the actual runtime dependencies. Its root filesystem is read-only, with a persistent named `history` volume at `/app/.runtime` and temporary storage at `/tmp`. The volume survives container restarts and ordinary `docker compose down`; removing volumes also removes saved history. Model code must load its assets from local files and direct any necessary temporary caches to `/tmp`. Docker has not been run on the authoring computer because Docker is unavailable there.
 
 `scripts/package_release.py` creates the portable source ZIP. It excludes local environments, configuration secrets, cloud metadata, uploaded media, and model weights. Share model assets separately and rebuild the container or rerun native setup after changing adapter dependencies. No machine-specific paths are required.
 

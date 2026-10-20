@@ -110,7 +110,27 @@
     @media print{html,body{background:white;font-size:10pt}main{max-width:none;margin:0;padding:0;border:0;border-radius:0}h1{font-size:23pt}h2{font-size:15pt;break-after:avoid}h3,caption{break-after:avoid}.intro{font-size:11pt}.summary,.meta{grid-template-columns:1fr 1fr}.value{font-size:19pt}.small,.footer{font-size:9pt}table,.appendix{font-size:8.5pt}th,td{padding:7px}.screen-help,nav{display:none}.transcript p{grid-template-columns:90px 1fr}thead{display:table-header-group}a{color:inherit}a[href^='#']{text-decoration:none}.card,.notice,.actions,thead th{-webkit-print-color-adjust:exact;print-color-adjust:exact}.appendix-section{break-before:page}.footer{margin-top:18px}}
   `;
 
+  function buildTextDocument(report, options = {}) {
+    const result = report.text_analysis || {};
+    const scamNames = {SCAM:"Likely scam", NOT_SCAM:"No scam indicators found", UNCERTAIN:"Uncertain"};
+    const phishingNames = {PHISHING:"Likely phishing", NOT_PHISHING:"No phishing indicators found", UNCERTAIN:"Uncertain"};
+    const score = Number.isInteger(result.score) && result.score >= 0 && result.score <= 100 ? `${result.score}/100` : "Not recorded";
+    const confidence = validScore(result.confidence) ? `${Math.round(result.confidence * 100)}%` : "Not recorded";
+    const model = report.model || {};
+    return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'"><title>VoiceScope - saved message analysis</title><style>${styles}
+      .message-body{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;line-height:1.65;padding:18px;background:#f7f9fc;border:1px solid #dce3ed;border-radius:8px}
+      </style></head><body><main>
+      <header><p class="eyebrow">SAVED MESSAGE ANALYSIS</p><h1>Scam and phishing assessment</h1><p class="intro">A saved result for the submitted message. Reopening this report does not run the classifier again.</p></header>
+      <section class="summary" aria-label="Saved assessments"><div class="card"><h2>Scam assessment</h2><div class="value">${escape(scamNames[result.scam_verdict] || "Uncertain")}</div></div><div class="card"><h2>Phishing assessment</h2><div class="value">${escape(phishingNames[result.phishing_verdict] || "Uncertain")}</div></div><div class="card"><h2>Model score</h2><div class="value">${escape(score)}</div><p class="small">Not an accuracy estimate or calibrated probability.</p></div><div class="card"><h2>Model confidence</h2><div class="value">${escape(confidence)}</div><p class="small">Self-reported and not calibrated.</p></div></section>
+      <section><h2>Explanation and evidence</h2><p>${escape(result.reason || "No explanation was supplied.")}</p>${array(result.cues).length ? `<ul>${array(result.cues).map(cue => `<li><strong>${escape(cue.category)}</strong>: ${escape(cue.text)}</li>`).join("")}</ul>` : "<p>No additional cues were supplied.</p>"}</section>
+      <section><h2>Original checked message</h2><div class="message-body">${escape(report.input_text || "")}</div></section>
+      <section><h2>Analysis details</h2><dl class="meta"><div><dt>Checked</dt><dd>${escape(date(report.created_at))}</dd></div><div><dt>Report ID</dt><dd>${escape(report.id)}</dd></div><div><dt>Content model</dt><dd>${escape(model.version || "Not recorded")}</dd></div><div><dt>Analysis type</dt><dd>Pasted text; voice authenticity was not assessed.</dd></div></dl><p>${escape(result.disclaimer || "This is an AI estimate, not proof a message is safe or fraudulent.")}</p></section>
+      <footer class="footer">VoiceScope - Exported ${escape(date(options.exportedAt || new Date().toISOString()))}<br>Report ID: ${escape(report.id)}<br>This document preserves the saved message and analysis. It does not verify sender identity or visit links.</footer>
+      </main></body></html>`;
+  }
+
   function buildDocument(report, options = {}) {
+    if (report.kind === "text") return buildTextDocument(report, options);
     const s = summarize(report);
     const transcript = s.demo ? [] : array(report.transcript);
     const cues = s.contentCompleted ? array(report.scam_analysis?.cues) : [];
@@ -166,6 +186,10 @@
   }
 
   function filename(report) {
+    if (report.kind === "text") {
+      const id = String(report.id || "saved").replace(/[^a-zA-Z0-9_-]/g, "").slice(0,40) || "saved";
+      return `voicescope-message-${id}-report.html`;
+    }
     const stem = String(report.filename || "recording").replace(/\.[^.]+$/, "").replace(/[^a-zA-Z0-9_-]+/g, "-").replace(/^-+|-+$/g, "").slice(0,80) || "recording";
     return `voicescope-${report.mode === "demo" ? "demo" : "live"}-${stem}-report.html`;
   }

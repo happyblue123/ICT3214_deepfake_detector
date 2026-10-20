@@ -143,7 +143,9 @@ For future sessions, open PowerShell in the same `voice-scope` folder and run on
 .\.venv\Scripts\python.exe -m backend.run
 ```
 
-Run setup again when the project's Python dependencies change. Export reports you want to keep: server-side results are temporary, expire 30 minutes after completion/failure, and are removed on restart/shutdown. Closing a completed report also deletes that analysis and retained audio.
+Run setup again when the project's Python dependencies change. **Analysis History** saves successful media analyses and message checks across app restarts. Search or filter it to reopen the original message and its saved result, inspect a media report, or download HTML/JSON and save a PDF. Opening a saved report does not rerun models. History remains on this computer until you delete it by default. Delete removes that record and any retained audio; downloaded copies remain separate. Native history is stored in `.runtime/`; Compose stores it in its named `history` volume. Keep exports as backups. Earlier expired results and text checked before this feature cannot be recovered.
+
+For automatic expiry, add `HISTORY_RETENTION_MINUTES=1440` to `.env` for 24 hours (or choose another positive number of minutes), then restart the backend. The default `HISTORY_RETENTION_MINUTES=0` disables automatic expiry. This setting applies to existing saved records too, using their completion time; choosing a shorter period can remove older history on the next startup. The history page shows the active retention policy. To remove a recording from its analysis page, use its explicitly labelled delete control.
 
 ## Connecting the real team models
 

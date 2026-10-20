@@ -9,13 +9,14 @@ services:
     environment:
       DETECTOR_PLUGIN: "${DETECTOR_PLUGIN:-}"
       CONTENT_PLUGIN: "${CONTENT_PLUGIN:-}"
+      HISTORY_RETENTION_MINUTES: "${HISTORY_RETENTION_MINUTES:-0}"
       MODEL_DIR: /app/models
       HF_HUB_OFFLINE: "1"
       TRANSFORMERS_OFFLINE: "1"
     volumes:
       - ./models:/app/models:ro
+      - history:/app/.runtime
     tmpfs:
-      - /app/.runtime:uid=10001,gid=10001,mode=0700,size=2g
       - /tmp:mode=1777,size=512m
     read_only: true
     init: true
@@ -25,3 +26,5 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
+volumes:
+  history:

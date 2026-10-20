@@ -214,7 +214,7 @@ test("preview prints its own document, preserves its snapshot and keeps links in
   const destination={scrollIntoView(){scrolled=true;},setAttribute(){},focus(){}};
   function element(id) {
     if(!elements.has(id))elements.set(id,{
-      handlers:{},classList:{remove(){},add(){},toggle(){}},
+      value:"",handlers:{},classList:{remove(){},add(){},toggle(){}},
       addEventListener(event,handler){this.handlers[event]=handler;},
       showModal(){this.open=true;},close(){this.open=false;this.handlers.close?.();},
       contentWindow:{focus(){},print(){framePrints++;}},
@@ -223,7 +223,7 @@ test("preview prints its own document, preserves its snapshot and keeps links in
     return elements.get(id);
   }
   const context=vm.createContext({
-    document:{getElementById:element},window:{print(){pagePrints++;}},
+    document:{getElementById:element},window:{print(){pagePrints++;}},location:{search:""},URLSearchParams,
     fetch:()=>new Promise(()=>{}),AbortSignal:{timeout:()=>null},
     VoiceScopeReport:{buildDocument,summarize,filename},fixture:fixture()
   });
@@ -245,4 +245,41 @@ test("preview prints its own document, preserves its snapshot and keeps links in
   element("close-report-preview").handlers.click();
   assert.equal(element("report-preview").srcdoc,"");
   assert.equal(element("print-report-document").disabled,true);
+});
+
+function textFixture() {
+  return {id:"text-123",kind:"text",mode:"live",created_at:"2026-10-20T05:00:00Z",
+    input_text:"Dear client,\nEnter your PIN",model:{version:"controlled-model"},
+    text_analysis:{scam_verdict:"SCAM",phishing_verdict:"PHISHING",score:95,confidence:.95,
+      reason:"Requests bank credentials.",cues:[{category:"Credentials",text:"Enter your PIN"}]}};
+}
+test("saved text report preserves message and distinct scam/phishing verdicts", () => {
+  const report=textFixture(), before=JSON.stringify(report), html=buildDocument(report);
+  assert.match(html,/Likely scam/); assert.match(html,/Likely phishing/);
+  assert.match(html,/95\/100/); assert.match(html,/Self-reported and not calibrated/);
+  assert.match(html,/Dear client,\nEnter your PIN/);
+  assert.match(html,/controlled-model/); assert.match(html,/Report ID: text-123/);
+  assert.match(html,/voice authenticity was not assessed/);
+  assert.doesNotMatch(html,/<script|<audio|<link|\/api\//i);
+  assert.match(html,/default-src 'none'/);
+  assert.equal(JSON.stringify(report),before);
+  assert.equal(filename(report),"voicescope-message-text-123-report.html");
+});
+test("saved text exports escape input and evidence without inventing voice scores", () => {
+  const report=textFixture(), attack='<script>alert(1)</script><img src=x onerror="alert(2)">';
+  report.input_text=attack; report.text_analysis.reason=attack;
+  report.text_analysis.cues=[{category:attack,text:attack}]; report.model.version=attack;
+  report.id=attack;
+  const html=buildDocument(report);
+  assert.doesNotMatch(html,/<script|<img|onerror="|Overall synthetic score/i);
+  assert.match(html,/&lt;script&gt;/);
+  assert.ok(!filename(report).includes("<"));
+});
+test("uncertain saved text results remain uncertain", () => {
+  const report=textFixture();
+  report.text_analysis.scam_verdict="UNCERTAIN";
+  report.text_analysis.phishing_verdict="UNCERTAIN";
+  const html=buildDocument(report);
+  assert.equal((html.match(/class="value">Uncertain/g)||[]).length,2);
+  assert.doesNotMatch(html,/Likely scam|Likely phishing|Likely authentic/);
 });
