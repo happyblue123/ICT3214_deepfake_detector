@@ -7,7 +7,7 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[1]
 TOP_LEVEL = ("README.md", "TEAM_SETUP.md", "Dockerfile", "compose.yaml", ".dockerignore", ".gitignore",
              ".env.example", "requirements.txt", "requirements.lock.txt", "requirements-model.txt",
-             "setup.ps1", "start.ps1")
+             "setup.ps1", "start.ps1", "evaluate_voicescope.py")
 DIRECTORIES = ("backend", "dist", "docs", "tests", "scripts", "plugins")
 
 

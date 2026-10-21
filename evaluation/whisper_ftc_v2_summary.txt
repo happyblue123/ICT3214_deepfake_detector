@@ -1,0 +1,10 @@
+VOICESCOPE EVALUATION SUMMARY
+Evaluator: 2026-10-19.2
+Scores are not accuracy percentages. Failed and inconclusive cases are shown separately.
+
+WHISPER
+Status: completed; successful/planned: 1/1
+Corpus WER: 0.00%; edits/reference words: 0/29
+
+Keep the JSON: it contains the input manifest, raw responses, attempt history and individual predictions.
+These component timings do not measure the full browser/app workflow. Training provenance and explanation fidelity need separate evidence.

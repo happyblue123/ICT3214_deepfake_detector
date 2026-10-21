@@ -1,0 +1,327 @@
+{
+  "schema_version": 2,
+  "evaluator_version": "2026-10-19.2",
+  "created_at": "2026-10-19T12:28:26.753043+00:00",
+  "specification_sha256": "c3c6fec574554feaecf32236234660eaa538fec6cf484e3314cfebef96a7ce23",
+  "specification": {
+    "task": "asr",
+    "max_per_class": 50,
+    "seed": 42,
+    "conditions": [
+      "clean"
+    ],
+    "scam_target": "audio",
+    "gemini_model": "gemini-3.8-flash",
+    "whisper_model": "small",
+    "interval_seconds": 14,
+    "max_attempts": 3,
+    "scam_cases": [],
+    "voice_manifest": [],
+    "asr_manifest": [
+      {
+        "id": "FTC_Apple_support",
+        "audio_path": "C:\\Users\\jianyu\\Downloads\\Apple-iCloud-Account-Breached_Scam-Call.mp3",
+        "reference_text": "Before using any devices or going online, please contact Apple Support Advisor. Press 1 to connect to Apple Support Advisor. Press 2 to listen to this again. Thank you.",
+        "scam_label": "SCAM",
+        "reference_source_url": "https://consumer.ftc.gov/features/robocall-scam-examples",
+        "voice_origin": "unknown",
+        "path": "C:\\Users\\jianyu\\Downloads\\Apple-iCloud-Account-Breached_Scam-Call.mp3",
+        "sha256": "2bf5391edebb9bd95e1fad3ad2ef615ffdc82ebca2d6f0473f066fe08ffcfd02",
+        "status": "pending"
+      }
+    ],
+    "source_hashes": {
+      "evaluate_voicescope.py": "5e1f130f416bb68372835c37b79fed8588b1d96b30d97e5fa6fe5fc0afd4ab95",
+      "backend\\pipeline.py": "566541e28d7d364ef5b726663a576b3cc80463d2096b1d6f4e819a4973b2694a",
+      "plugins\\wavlm_detector.py": "0c12377a2607eae1b64b5383bf6463e3a4407c718d97fe6b00cacd1e982d81a3",
+      "plugins\\scam_content.py": "ceb2a712411b935785dda51972b86970e451606b80b02eafadc3dcb8a495fd0d"
+    },
+    "checkpoint_identity": [
+      {
+        "name": "config.json",
+        "size_bytes": 2549,
+        "sha256": "50d86a7825ad9f549d8db984a398a842cf79140a00e8e48c62a2a428015a474d"
+      },
+      {
+        "name": "model.safetensors",
+        "size_bytes": 378347208,
+        "sha256": "84af0250940c95962b64d85154927bc70d682e79208094a0293c10147828ffdb"
+      },
+      {
+        "name": "preprocessor_config.json",
+        "size_bytes": 215,
+        "sha256": "99272fe8ccfab114b68b478681ea47ee3a1ce62bb788cb92dd6e4f69fb1f1da2"
+      }
+    ],
+    "runtime_environment": {
+      "python": "3.12.0 (tags/v3.12.0:0fb18b0, Oct  2 2023, 13:03:39) [MSC v.1935 64 bit (AMD64)]",
+      "platform": "Windows-11-10.0.26200-SP0",
+      "cpu": "AMD64 Family 25 Model 97 Stepping 2, AuthenticAMD",
+      "packages": {
+        "numpy": "2.5.4",
+        "torch": "2.14.1",
+        "transformers": "5.18.0",
+        "openai-whisper": "20250625",
+        "google-genai": "2.31.0",
+        "imageio-ffmpeg": "0.6.0"
+      },
+      "timing_note": "Component inference/request timing excludes browser upload and startup unless stated."
+    }
+  },
+  "environment": {
+    "python": "3.12.0 (tags/v3.12.0:0fb18b0, Oct  2 2023, 13:03:39) [MSC v.1935 64 bit (AMD64)]",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "cpu": "AMD64 Family 25 Model 97 Stepping 2, AuthenticAMD",
+    "packages": {
+      "numpy": "2.5.4",
+      "torch": "2.14.1",
+      "transformers": "5.18.0",
+      "openai-whisper": "20250625",
+      "google-genai": "2.31.0",
+      "imageio-ffmpeg": "0.6.0"
+    },
+    "timing_note": "Component inference/request timing excludes browser upload and startup unless stated."
+  },
+  "checkpoint": {
+    "checkpoint_dir": "D:\\SIT\\Year 3\\ICT3214(SecurityAnalytics)\\CW_1\\ICT3214_deepfake_detector\\models\\wavlm-deepfake-detector",
+    "exists": true,
+    "files": [
+      {
+        "name": "config.json",
+        "size_bytes": 2549,
+        "sha256": "50d86a7825ad9f549d8db984a398a842cf79140a00e8e48c62a2a428015a474d"
+      },
+      {
+        "name": "model.safetensors",
+        "size_bytes": 378347208,
+        "sha256": "84af0250940c95962b64d85154927bc70d682e79208094a0293c10147828ffdb"
+      },
+      {
+        "name": "preprocessor_config.json",
+        "size_bytes": 215,
+        "sha256": "99272fe8ccfab114b68b478681ea47ee3a1ce62bb788cb92dd6e4f69fb1f1da2"
+      }
+    ],
+    "weights_sha256": "84af0250940c95962b64d85154927bc70d682e79208094a0293c10147828ffdb",
+    "config.json": {
+      "activation_dropout": 0.0,
+      "adapter_kernel_size": 3,
+      "adapter_stride": 2,
+      "add_adapter": false,
+      "apply_spec_augment": true,
+      "architectures": [
+        "WavLMForSequenceClassification"
+      ],
+      "attention_dropout": 0.1,
+      "bos_token_id": 1,
+      "classifier_proj_size": 256,
+      "codevector_dim": 256,
+      "contrastive_logits_temperature": 0.1,
+      "conv_bias": false,
+      "conv_dim": [
+        512,
+        512,
+        512,
+        512,
+        512,
+        512,
+        512
+      ],
+      "conv_kernel": [
+        10,
+        3,
+        3,
+        3,
+        3,
+        2,
+        2
+      ],
+      "conv_stride": [
+        5,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      "ctc_loss_reduction": "sum",
+      "ctc_zero_infinity": false,
+      "diversity_loss_weight": 0.1,
+      "do_stable_layer_norm": false,
+      "dtype": "float32",
+      "eos_token_id": 2,
+      "feat_extract_activation": "gelu",
+      "feat_extract_norm": "group",
+      "feat_proj_dropout": 0.1,
+      "feat_quantizer_dropout": 0.0,
+      "final_dropout": 0.0,
+      "freeze_feat_extract_train": true,
+      "hidden_act": "gelu",
+      "hidden_dropout": 0.1,
+      "hidden_size": 768,
+      "id2label": {
+        "0": "fake",
+        "1": "real"
+      },
+      "initializer_range": 0.02,
+      "intermediate_size": 3072,
+      "label2id": {
+        "fake": 0,
+        "real": 1
+      },
+      "layer_norm_eps": 1e-05,
+      "layerdrop": 0.05,
+      "mask_channel_length": 10,
+      "mask_channel_min_space": 1,
+      "mask_channel_other": 0.0,
+      "mask_channel_prob": 0.0,
+      "mask_channel_selection": "static",
+      "mask_feature_length": 10,
+      "mask_feature_min_masks": 0,
+      "mask_feature_prob": 0.0,
+      "mask_time_length": 10,
+      "mask_time_min_masks": 2,
+      "mask_time_min_space": 1,
+      "mask_time_other": 0.0,
+      "mask_time_prob": 0.05,
+      "mask_time_selection": "static",
+      "max_bucket_distance": 800,
+      "model_type": "wavlm",
+      "no_mask_channel_overlap": false,
+      "no_mask_time_overlap": false,
+      "num_adapter_layers": 3,
+      "num_attention_heads": 12,
+      "num_buckets": 320,
+      "num_codevector_groups": 2,
+      "num_codevectors_per_group": 320,
+      "num_conv_pos_embedding_groups": 16,
+      "num_conv_pos_embeddings": 128,
+      "num_ctc_classes": 80,
+      "num_feat_extract_layers": 7,
+      "num_hidden_layers": 12,
+      "num_negatives": 100,
+      "output_hidden_size": 768,
+      "pad_token_id": 0,
+      "proj_codevector_dim": 256,
+      "tdnn_dilation": [
+        1,
+        2,
+        3,
+        1,
+        1
+      ],
+      "tdnn_dim": [
+        512,
+        512,
+        512,
+        512,
+        1500
+      ],
+      "tdnn_kernel": [
+        5,
+        3,
+        3,
+        1,
+        1
+      ],
+      "tokenizer_class": "Wav2Vec2CTCTokenizer",
+      "transformers_version": "5.18.0",
+      "use_cache": false,
+      "use_weighted_layer_sum": false,
+      "vocab_size": 32,
+      "xvector_output_dim": 512
+    },
+    "preprocessor_config.json": {
+      "do_normalize": false,
+      "feature_extractor_type": "Wav2Vec2FeatureExtractor",
+      "feature_size": 1,
+      "padding_side": "right",
+      "padding_value": 0.0,
+      "return_attention_mask": true,
+      "sampling_rate": 16000
+    }
+  },
+  "wavlm_evaluation": null,
+  "scam_benchmark": null,
+  "whisper_evaluation": {
+    "cases": [
+      {
+        "id": "FTC_Apple_support",
+        "audio_path": "C:\\Users\\jianyu\\Downloads\\Apple-iCloud-Account-Breached_Scam-Call.mp3",
+        "reference_text": "Before using any devices or going online, please contact Apple Support Advisor. Press 1 to connect to Apple Support Advisor. Press 2 to listen to this again. Thank you.",
+        "scam_label": "SCAM",
+        "reference_source_url": "https://consumer.ftc.gov/features/robocall-scam-examples",
+        "voice_origin": "unknown",
+        "path": "C:\\Users\\jianyu\\Downloads\\Apple-iCloud-Account-Breached_Scam-Call.mp3",
+        "sha256": "2bf5391edebb9bd95e1fad3ad2ef615ffdc82ebca2d6f0473f066fe08ffcfd02",
+        "status": "completed",
+        "transcript": "Before using any devices or going online, please contact Apple Support Advisor. Press 1 to connect to Apple Support Advisor. Press 2 to listen to this again. Thank you.",
+        "segments": [
+          {
+            "start_seconds": 0.0,
+            "end_seconds": 6.0,
+            "text": "Before using any devices or going online, please contact Apple Support Advisor."
+          },
+          {
+            "start_seconds": 6.0,
+            "end_seconds": 11.52,
+            "text": "Press 1 to connect to Apple Support Advisor. Press 2 to listen to this again. Thank you."
+          }
+        ],
+        "duration_s": 11.52,
+        "errors": {
+          "reference_words": 29,
+          "hypothesis_words": 29,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "edits": 0,
+          "wer": 0.0
+        },
+        "latency_ms": 2387.3613999967347
+      }
+    ],
+    "summary": {
+      "status": "completed",
+      "planned_cases": 1,
+      "successful_cases": 1,
+      "statuses": {
+        "completed": 1
+      },
+      "reference_words": 29,
+      "edits": 0,
+      "corpus_wer": 0.0,
+      "normalization": "Unicode NFKC, case-folding, alphanumeric word tokens; punctuation ignored, digit tokens preserved.",
+      "successful_transcription_latency": {
+        "count": 1,
+        "mean_ms": 2387.3613999967347,
+        "p95_ms": 2387.3613999967347
+      }
+    },
+    "runtime": {
+      "model": "small",
+      "device": "cpu",
+      "language": "en",
+      "model_load_ms": 1596.2139000039315
+    }
+  },
+  "limitations": [
+    "Scripted cases are diagnostic examples, not an independent real-call benchmark.",
+    "This audit identifies model files but cannot prove train/test separation or selected training epoch.",
+    "No accuracy claim is supported by scores/confidence alone.",
+    "Request/inference timings exclude the browser workflow; app end-to-end latency is not measured.",
+    "Explanation fidelity needs human review. The keyword baseline is a documented comparator, not an established commercial tool."
+  ],
+  "session_history": [
+    {
+      "started_at": "2026-10-19T12:28:26.755042+00:00",
+      "resumed": false,
+      "interval_seconds": 14,
+      "max_attempts": 3,
+      "finished_at": "2026-10-19T12:28:31.968705+00:00",
+      "error": null
+    }
+  ],
+  "updated_at": "2026-10-19T12:28:31.968705+00:00"
+}

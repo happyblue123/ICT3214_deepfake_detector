@@ -1,0 +1,17 @@
+VOICESCOPE EVALUATION SUMMARY
+Evaluator: 2026-10-19.2
+Scores are not accuracy percentages. Failed and inconclusive cases are shown separately.
+
+VOICE / clean (positive=synthetic, negative=human)
+Status: completed; planned: 6; statuses: {'completed': 6}
+Decision coverage of all planned cases: 100.00%
+Accuracy among 6 definite valid decisions: 66.67%
+Macro F1: 0.4; confusion matrix: {'tp': 0, 'tn': 4, 'fp': 0, 'fn': 2}
+Positive-class precision/recall/F1: {'support': 2, 'precision': 0.0, 'recall': 0.0, 'f1': 0.0}
+Negative-class precision/recall/F1: {'support': 4, 'precision': 0.6666666666666666, 'recall': 1.0, 'f1': 0.8}
+ROC-AUC: 0.875; interpolated EER: 25.00%
+Successful component timing (n=6): mean 1698.4659833324258 ms; p95 4398.552725000627 ms
+Forced binary accuracy at 0.5 on scored cases: 66.67%; this differs from the app policy.
+
+Keep the JSON: it contains the input manifest, raw responses, attempt history and individual predictions.
+These component timings do not measure the full browser/app workflow. Training provenance and explanation fidelity need separate evidence.

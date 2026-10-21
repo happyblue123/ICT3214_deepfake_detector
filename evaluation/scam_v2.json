@@ -1,0 +1,930 @@
+{
+  "schema_version": 2,
+  "evaluator_version": "2026-10-19.2",
+  "created_at": "2026-10-19T11:56:25.566761+00:00",
+  "specification_sha256": "3dff3dc4fc2c6829f50f870318c3622304546bc6154db4d449d16cd4029933ce",
+  "specification": {
+    "task": "scam",
+    "max_per_class": 50,
+    "seed": 42,
+    "conditions": [
+      "clean"
+    ],
+    "scam_target": "audio",
+    "gemini_model": "gemini-3.8-flash",
+    "whisper_model": "small",
+    "interval_seconds": 14.0,
+    "max_attempts": 3,
+    "scam_cases": [
+      {
+        "id": "SCAM_01_SPF_MAS",
+        "expected": "SCAM",
+        "category": "Authority Impersonation (SPF / MAS)",
+        "transcript": "Hello, this is Inspector Tan from the Singapore Police Force Anti-Scam Command. Your NRIC has been linked to a frozen DBS bank account used for money laundering. To avoid an immediate arrest warrant, you must transfer your remaining funds to a Monetary Authority of Singapore safety holding account for verification within one hour. Do not inform anyone as this case is under an official gag order.",
+        "true_label": 1,
+        "status": "pending"
+      },
+      {
+        "id": "SCAM_02_DBS_OTP",
+        "expected": "SCAM",
+        "category": "Bank Security / Credential & OTP Request",
+        "transcript": "Good afternoon, I am calling from DBS Fraud Prevention Department. We detected an unauthorized PayNow transfer of 4,800 dollars from your savings account. To cancel this transaction immediately, please read out the six-digit One-Time Password just sent to your mobile phone and confirm your digital token PIN.",
+        "true_label": 1,
+        "status": "pending"
+      },
+      {
+        "id": "SCAM_03_MOM_WORKPASS",
+        "expected": "SCAM",
+        "category": "Government Threat / Fine Payment",
+        "transcript": "This is an automated notice from the Ministry of Manpower. Your work pass status has been suspended due to an immigration violation. Press 1 immediately to speak to an investigating officer and pay the 1,500 dollar administrative security deposit via PayNow, or you will be deported within 24 hours.",
+        "true_label": 1,
+        "status": "pending"
+      },
+      {
+        "id": "SCAM_04_JOB_PREPAYMENT",
+        "expected": "SCAM",
+        "category": "Upfront-Payment Task / Job Scam",
+        "transcript": "Hi! Welcome to our Shopee merchant boosting campaign. You have completed two trial tasks and earned 50 dollars. To unlock the VIP merchant commission tier and withdraw your 1,200 dollar payout, please transfer an advance top-up of 350 dollars to our company PayNow UEN before 6 PM today.",
+        "true_label": 1,
+        "status": "pending"
+      },
+      {
+        "id": "SCAM_05_SINGPASS_VERIFY",
+        "expected": "SCAM",
+        "category": "Singpass Phishing / Remote Access",
+        "transcript": "Hello sir, calling from SingTel technical support. Your home fibre router has been compromised by foreign hackers. Please download the AnyDesk support application on your phone right now and approve the Singpass login notification so our engineer can secure your identity profile.",
+        "true_label": 1,
+        "status": "pending"
+      },
+      {
+        "id": "SCAM_06_FRIEND_IMPERSONATION",
+        "expected": "SCAM",
+        "category": "Urgent Impersonation / Unverified Transfer",
+        "transcript": "Hey bro, it is me, I lost my phone yesterday and this is my temporary number. I am stuck at a clinic right now and my banking app is locked. Can you urgently PayNow 800 dollars to this third-party mobile number first? I will pay you back tonight, please hurry.",
+        "true_label": 1,
+        "status": "pending"
+      },
+      {
+        "id": "BENIGN_01_DINNER_PAYNOW",
+        "expected": "NOT_SCAM",
+        "category": "Legitimate Everyday Financial Conversation",
+        "transcript": "Hey everyone, thanks for coming to dinner at Tiong Bahru last night! The total bill at the restaurant came up to 120 dollars, so it is 30 dollars per person. Whenever you are free this week, you can just PayNow me at my usual mobile number. No rush at all!",
+        "true_label": 0,
+        "status": "pending"
+      },
+      {
+        "id": "BENIGN_02_SECURITY_AWARENESS",
+        "expected": "NOT_SCAM",
+        "category": "Scam Awareness / Educational Advice",
+        "transcript": "Welcome to our company cybersecurity briefing. Please remember that officers from the Singapore Police Force, MAS, or DBS will never ask you to transfer money to a safety account or ask for your Singpass password and SMS OTP over a phone call. If you receive such a call, hang up immediately and call the official ScamShield helpline at 1799.",
+        "true_label": 0,
+        "status": "pending"
+      },
+      {
+        "id": "BENIGN_03_CORPORATE_INVOICE",
+        "expected": "NOT_SCAM",
+        "category": "Standard Business Billing Discussion",
+        "transcript": "Hi Mei Hui, following up on our quarterly software maintenance renewal. I have uploaded the official tax invoice to your procurement portal under Purchase Order 4421. As per our standard net-30 payment terms, your finance team can process the bank transfer through the existing vendor GIRO arrangement next month.",
+        "true_label": 0,
+        "status": "pending"
+      },
+      {
+        "id": "BENIGN_04_AI_NARRATION",
+        "expected": "NOT_SCAM",
+        "category": "Legitimate Synthetic Narration / Lecture",
+        "transcript": "In this module of Security Analytics, we examine how self-supervised speech models such as WavLM extract acoustic representations from 16 kilohertz waveforms. By separating voice authenticity scores from transcript semantics, analysts can avoid falsely flagging benign text-to-speech accessibility tools as fraud.",
+        "true_label": 0,
+        "status": "pending"
+      },
+      {
+        "id": "BENIGN_05_BANK_BRANCH_INQUIRY",
+        "expected": "NOT_SCAM",
+        "category": "Legitimate Customer Inquiry",
+        "transcript": "Hi, I am planning to visit the OCBC branch at Jurong East tomorrow morning with my mother to update her joint account passbook. Do we need to book a queue slot on the mobile app beforehand, and should she bring her physical NRIC card along?",
+        "true_label": 0,
+        "status": "pending"
+      },
+      {
+        "id": "BENIGN_06_IT_HELPDESK_NOTICE",
+        "expected": "NOT_SCAM",
+        "category": "Routine Internal IT Maintenance",
+        "transcript": "Good morning team, the university learning management system will undergo scheduled database maintenance this Sunday from 2 AM to 5 AM. Please save your coursework submissions beforehand. No action or password reset is required from students.",
+        "true_label": 0,
+        "status": "pending"
+      }
+    ],
+    "voice_manifest": [],
+    "asr_manifest": [],
+    "source_hashes": {
+      "evaluate_voicescope.py": "5e1f130f416bb68372835c37b79fed8588b1d96b30d97e5fa6fe5fc0afd4ab95",
+      "backend\\pipeline.py": "566541e28d7d364ef5b726663a576b3cc80463d2096b1d6f4e819a4973b2694a",
+      "plugins\\wavlm_detector.py": "0c12377a2607eae1b64b5383bf6463e3a4407c718d97fe6b00cacd1e982d81a3",
+      "plugins\\scam_content.py": "ceb2a712411b935785dda51972b86970e451606b80b02eafadc3dcb8a495fd0d"
+    },
+    "checkpoint_identity": [
+      {
+        "name": "config.json",
+        "size_bytes": 2549,
+        "sha256": "50d86a7825ad9f549d8db984a398a842cf79140a00e8e48c62a2a428015a474d"
+      },
+      {
+        "name": "model.safetensors",
+        "size_bytes": 378347208,
+        "sha256": "84af0250940c95962b64d85154927bc70d682e79208094a0293c10147828ffdb"
+      },
+      {
+        "name": "preprocessor_config.json",
+        "size_bytes": 215,
+        "sha256": "99272fe8ccfab114b68b478681ea47ee3a1ce62bb788cb92dd6e4f69fb1f1da2"
+      }
+    ],
+    "runtime_environment": {
+      "python": "3.12.0 (tags/v3.12.0:0fb18b0, Oct  2 2023, 13:03:39) [MSC v.1935 64 bit (AMD64)]",
+      "platform": "Windows-11-10.0.26200-SP0",
+      "cpu": "AMD64 Family 25 Model 97 Stepping 2, AuthenticAMD",
+      "packages": {
+        "numpy": "2.5.4",
+        "torch": "2.14.1",
+        "transformers": "5.18.0",
+        "openai-whisper": "20250625",
+        "google-genai": "2.31.0",
+        "imageio-ffmpeg": "0.6.0"
+      },
+      "timing_note": "Component inference/request timing excludes browser upload and startup unless stated."
+    }
+  },
+  "environment": {
+    "python": "3.12.0 (tags/v3.12.0:0fb18b0, Oct  2 2023, 13:03:39) [MSC v.1935 64 bit (AMD64)]",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "cpu": "AMD64 Family 25 Model 97 Stepping 2, AuthenticAMD",
+    "packages": {
+      "numpy": "2.5.4",
+      "torch": "2.14.1",
+      "transformers": "5.18.0",
+      "openai-whisper": "20250625",
+      "google-genai": "2.31.0",
+      "imageio-ffmpeg": "0.6.0"
+    },
+    "timing_note": "Component inference/request timing excludes browser upload and startup unless stated."
+  },
+  "checkpoint": {
+    "checkpoint_dir": "D:\\SIT\\Year 3\\ICT3214(SecurityAnalytics)\\CW_1\\ICT3214_deepfake_detector\\models\\wavlm-deepfake-detector",
+    "exists": true,
+    "files": [
+      {
+        "name": "config.json",
+        "size_bytes": 2549,
+        "sha256": "50d86a7825ad9f549d8db984a398a842cf79140a00e8e48c62a2a428015a474d"
+      },
+      {
+        "name": "model.safetensors",
+        "size_bytes": 378347208,
+        "sha256": "84af0250940c95962b64d85154927bc70d682e79208094a0293c10147828ffdb"
+      },
+      {
+        "name": "preprocessor_config.json",
+        "size_bytes": 215,
+        "sha256": "99272fe8ccfab114b68b478681ea47ee3a1ce62bb788cb92dd6e4f69fb1f1da2"
+      }
+    ],
+    "weights_sha256": "84af0250940c95962b64d85154927bc70d682e79208094a0293c10147828ffdb",
+    "config.json": {
+      "activation_dropout": 0.0,
+      "adapter_kernel_size": 3,
+      "adapter_stride": 2,
+      "add_adapter": false,
+      "apply_spec_augment": true,
+      "architectures": [
+        "WavLMForSequenceClassification"
+      ],
+      "attention_dropout": 0.1,
+      "bos_token_id": 1,
+      "classifier_proj_size": 256,
+      "codevector_dim": 256,
+      "contrastive_logits_temperature": 0.1,
+      "conv_bias": false,
+      "conv_dim": [
+        512,
+        512,
+        512,
+        512,
+        512,
+        512,
+        512
+      ],
+      "conv_kernel": [
+        10,
+        3,
+        3,
+        3,
+        3,
+        2,
+        2
+      ],
+      "conv_stride": [
+        5,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      "ctc_loss_reduction": "sum",
+      "ctc_zero_infinity": false,
+      "diversity_loss_weight": 0.1,
+      "do_stable_layer_norm": false,
+      "dtype": "float32",
+      "eos_token_id": 2,
+      "feat_extract_activation": "gelu",
+      "feat_extract_norm": "group",
+      "feat_proj_dropout": 0.1,
+      "feat_quantizer_dropout": 0.0,
+      "final_dropout": 0.0,
+      "freeze_feat_extract_train": true,
+      "hidden_act": "gelu",
+      "hidden_dropout": 0.1,
+      "hidden_size": 768,
+      "id2label": {
+        "0": "fake",
+        "1": "real"
+      },
+      "initializer_range": 0.02,
+      "intermediate_size": 3072,
+      "label2id": {
+        "fake": 0,
+        "real": 1
+      },
+      "layer_norm_eps": 1e-05,
+      "layerdrop": 0.05,
+      "mask_channel_length": 10,
+      "mask_channel_min_space": 1,
+      "mask_channel_other": 0.0,
+      "mask_channel_prob": 0.0,
+      "mask_channel_selection": "static",
+      "mask_feature_length": 10,
+      "mask_feature_min_masks": 0,
+      "mask_feature_prob": 0.0,
+      "mask_time_length": 10,
+      "mask_time_min_masks": 2,
+      "mask_time_min_space": 1,
+      "mask_time_other": 0.0,
+      "mask_time_prob": 0.05,
+      "mask_time_selection": "static",
+      "max_bucket_distance": 800,
+      "model_type": "wavlm",
+      "no_mask_channel_overlap": false,
+      "no_mask_time_overlap": false,
+      "num_adapter_layers": 3,
+      "num_attention_heads": 12,
+      "num_buckets": 320,
+      "num_codevector_groups": 2,
+      "num_codevectors_per_group": 320,
+      "num_conv_pos_embedding_groups": 16,
+      "num_conv_pos_embeddings": 128,
+      "num_ctc_classes": 80,
+      "num_feat_extract_layers": 7,
+      "num_hidden_layers": 12,
+      "num_negatives": 100,
+      "output_hidden_size": 768,
+      "pad_token_id": 0,
+      "proj_codevector_dim": 256,
+      "tdnn_dilation": [
+        1,
+        2,
+        3,
+        1,
+        1
+      ],
+      "tdnn_dim": [
+        512,
+        512,
+        512,
+        512,
+        1500
+      ],
+      "tdnn_kernel": [
+        5,
+        3,
+        3,
+        1,
+        1
+      ],
+      "tokenizer_class": "Wav2Vec2CTCTokenizer",
+      "transformers_version": "5.18.0",
+      "use_cache": false,
+      "use_weighted_layer_sum": false,
+      "vocab_size": 32,
+      "xvector_output_dim": 512
+    },
+    "preprocessor_config.json": {
+      "do_normalize": false,
+      "feature_extractor_type": "Wav2Vec2FeatureExtractor",
+      "feature_size": 1,
+      "padding_side": "right",
+      "padding_value": 0.0,
+      "return_attention_mask": true,
+      "sampling_rate": 16000
+    }
+  },
+  "wavlm_evaluation": null,
+  "scam_benchmark": {
+    "benchmark_type": "12 scripted diagnostic transcripts; intended labels require human review",
+    "target": "audio",
+    "model": "gemini-3.8-flash",
+    "cases": [
+      {
+        "id": "SCAM_01_SPF_MAS",
+        "expected": "SCAM",
+        "category": "Authority Impersonation (SPF / MAS)",
+        "transcript": "Hello, this is Inspector Tan from the Singapore Police Force Anti-Scam Command. Your NRIC has been linked to a frozen DBS bank account used for money laundering. To avoid an immediate arrest warrant, you must transfer your remaining funds to a Monetary Authority of Singapore safety holding account for verification within one hour. Do not inform anyone as this case is under an official gag order.",
+        "true_label": 1,
+        "status": "completed",
+        "attempts": [
+          {
+            "at": "2026-10-19T11:56:31.979771+00:00",
+            "status": "completed",
+            "raw_response": {
+              "verdict": "SCAM",
+              "confidence": 1.0,
+              "score": 100,
+              "reason": "This call is a classic government official impersonation scam commonly targeting Singapore residents.\n\n* **Government Agency Impersonation**: The caller claims to be an inspector from the Singapore Police Force (SPF) and mentions the Monetary Authority of Singapore (MAS). Actual Singapore law enforcement officers never demand money transfers over the phone.\n* **Allegation of Criminal Activity**: The caller falsely alleges that the victim's NRIC is tied to money laundering and threatens an immediate arrest warrant to induce fear.\n* **Demand for Fund Transfer to 'Safe Account'**: Asking the victim to move funds to a 'safety holding account' for verification is a standard scam technique; no government agency operates such accounts.\n* **Urgency and Secrecy Tactics**: Setting a one-hour deadline and citing a 'gag order' prevents the victim from verifying the claims with family, banks, or the real police."
+            },
+            "latency_ms": 4122.297900001286
+          }
+        ],
+        "raw_response": {
+          "verdict": "SCAM",
+          "confidence": 1.0,
+          "score": 100,
+          "reason": "This call is a classic government official impersonation scam commonly targeting Singapore residents.\n\n* **Government Agency Impersonation**: The caller claims to be an inspector from the Singapore Police Force (SPF) and mentions the Monetary Authority of Singapore (MAS). Actual Singapore law enforcement officers never demand money transfers over the phone.\n* **Allegation of Criminal Activity**: The caller falsely alleges that the victim's NRIC is tied to money laundering and threatens an immediate arrest warrant to induce fear.\n* **Demand for Fund Transfer to 'Safe Account'**: Asking the victim to move funds to a 'safety holding account' for verification is a standard scam technique; no government agency operates such accounts.\n* **Urgency and Secrecy Tactics**: Setting a one-hour deadline and citing a 'gag order' prevents the victim from verifying the claims with family, banks, or the real police."
+        },
+        "decision": "SCAM",
+        "score": 1.0,
+        "confidence": 1.0,
+        "response_warnings": [],
+        "latency_ms": 4122.297900001286
+      },
+      {
+        "id": "SCAM_02_DBS_OTP",
+        "expected": "SCAM",
+        "category": "Bank Security / Credential & OTP Request",
+        "transcript": "Good afternoon, I am calling from DBS Fraud Prevention Department. We detected an unauthorized PayNow transfer of 4,800 dollars from your savings account. To cancel this transaction immediately, please read out the six-digit One-Time Password just sent to your mobile phone and confirm your digital token PIN.",
+        "true_label": 1,
+        "status": "completed",
+        "attempts": [
+          {
+            "at": "2026-10-19T11:56:47.881448+00:00",
+            "status": "completed",
+            "raw_response": {
+              "verdict": "SCAM",
+              "confidence": 1.0,
+              "score": 100,
+              "reason": "This call is a definitive banking impersonation scam aimed at stealing credentials to drain your account.\n\n* **Bank Impersonation**: The caller falsely claims to represent DBS Bank's Fraud Prevention Department to gain immediate trust.\n* **False Sense of Urgency**: The scammer creates panic by alleging a fraudulent $4,800 PayNow transaction has just occurred.\n* **OTP and PIN Harvesting**: The caller asks for a 6-digit SMS OTP and a digital token PIN, which grants direct unauthorized access to your funds.\n* **Breach of Banking Security Protocols**: Singapore banks, including DBS, strictly mandate that their officers will never ask customers for OTPs, digital token approvals, or banking PINs over the phone."
+            },
+            "latency_ms": 6014.151700001094
+          }
+        ],
+        "raw_response": {
+          "verdict": "SCAM",
+          "confidence": 1.0,
+          "score": 100,
+          "reason": "This call is a definitive banking impersonation scam aimed at stealing credentials to drain your account.\n\n* **Bank Impersonation**: The caller falsely claims to represent DBS Bank's Fraud Prevention Department to gain immediate trust.\n* **False Sense of Urgency**: The scammer creates panic by alleging a fraudulent $4,800 PayNow transaction has just occurred.\n* **OTP and PIN Harvesting**: The caller asks for a 6-digit SMS OTP and a digital token PIN, which grants direct unauthorized access to your funds.\n* **Breach of Banking Security Protocols**: Singapore banks, including DBS, strictly mandate that their officers will never ask customers for OTPs, digital token approvals, or banking PINs over the phone."
+        },
+        "decision": "SCAM",
+        "score": 1.0,
+        "confidence": 1.0,
+        "response_warnings": [],
+        "latency_ms": 6014.151700001094
+      },
+      {
+        "id": "SCAM_03_MOM_WORKPASS",
+        "expected": "SCAM",
+        "category": "Government Threat / Fine Payment",
+        "transcript": "This is an automated notice from the Ministry of Manpower. Your work pass status has been suspended due to an immigration violation. Press 1 immediately to speak to an investigating officer and pay the 1,500 dollar administrative security deposit via PayNow, or you will be deported within 24 hours.",
+        "true_label": 1,
+        "status": "completed",
+        "attempts": [
+          {
+            "at": "2026-10-19T11:57:01.355091+00:00",
+            "status": "completed",
+            "raw_response": {
+              "verdict": "SCAM",
+              "confidence": 1.0,
+              "score": 99,
+              "reason": "This call is a classic government official impersonation scam targeting work pass holders with urgent threats.\n\n* **Government Agency Impersonation**: The caller falsely claims to represent the Ministry of Manpower (MOM), a common target agency used by scammers to intimidate foreign workers and employers in Singapore.\n* **Unusual Payment Method (PayNow)**: Legitimate government agencies like MOM will never demand immediate payment of fines, deposits, or fees via PayNow during an unsolicited phone call.\n* **Threats and Artificial Urgency**: The scammer uses aggressive threats of immediate deportation within 24 hours to induce panic and force compliance without verification.\n* **Automated Robocall Transfer**: The instruction to 'press 1' to connect to an investigating officer is a standard interactive voice response (IVR) technique used by scammers to filter for susceptible victims."
+            },
+            "latency_ms": 5501.701800003502
+          }
+        ],
+        "raw_response": {
+          "verdict": "SCAM",
+          "confidence": 1.0,
+          "score": 99,
+          "reason": "This call is a classic government official impersonation scam targeting work pass holders with urgent threats.\n\n* **Government Agency Impersonation**: The caller falsely claims to represent the Ministry of Manpower (MOM), a common target agency used by scammers to intimidate foreign workers and employers in Singapore.\n* **Unusual Payment Method (PayNow)**: Legitimate government agencies like MOM will never demand immediate payment of fines, deposits, or fees via PayNow during an unsolicited phone call.\n* **Threats and Artificial Urgency**: The scammer uses aggressive threats of immediate deportation within 24 hours to induce panic and force compliance without verification.\n* **Automated Robocall Transfer**: The instruction to 'press 1' to connect to an investigating officer is a standard interactive voice response (IVR) technique used by scammers to filter for susceptible victims."
+        },
+        "decision": "SCAM",
+        "score": 0.99,
+        "confidence": 1.0,
+        "response_warnings": [],
+        "latency_ms": 5501.701800003502
+      },
+      {
+        "id": "SCAM_04_JOB_PREPAYMENT",
+        "expected": "SCAM",
+        "category": "Upfront-Payment Task / Job Scam",
+        "transcript": "Hi! Welcome to our Shopee merchant boosting campaign. You have completed two trial tasks and earned 50 dollars. To unlock the VIP merchant commission tier and withdraw your 1,200 dollar payout, please transfer an advance top-up of 350 dollars to our company PayNow UEN before 6 PM today.",
+        "true_label": 1,
+        "status": "completed",
+        "attempts": [
+          {
+            "at": "2026-10-19T11:57:15.204532+00:00",
+            "status": "completed",
+            "raw_response": {
+              "verdict": "SCAM",
+              "confidence": 1.0,
+              "score": 98,
+              "reason": "This call is a classic e-commerce task/job scam exploiting the Shopee brand to extract advance payments from victims.\n\n* **Task/Job Scam Pattern**: The caller offers high monetary rewards for performing simple tasks or 'boosting' merchant ratings, which is a hallmark of syndicate job scams in Singapore.\n* **Advance Fee Fraud**: The victim is asked to pay an upfront fee ($350) disguised as an 'advance top-up' or tier upgrade before supposedly being allowed to withdraw earnings.\n* **Brand Impersonation**: Scammers frequently impersonate reputable platforms like Shopee to build false trust and legitimacy.\n* **Urgency and Payment Coercion**: Imposing a tight deadline ('before 6 PM today') pressure victims into making rushed transfers via PayNow without verifying the legitimacy of the scheme."
+            },
+            "latency_ms": 5346.235999997589
+          }
+        ],
+        "raw_response": {
+          "verdict": "SCAM",
+          "confidence": 1.0,
+          "score": 98,
+          "reason": "This call is a classic e-commerce task/job scam exploiting the Shopee brand to extract advance payments from victims.\n\n* **Task/Job Scam Pattern**: The caller offers high monetary rewards for performing simple tasks or 'boosting' merchant ratings, which is a hallmark of syndicate job scams in Singapore.\n* **Advance Fee Fraud**: The victim is asked to pay an upfront fee ($350) disguised as an 'advance top-up' or tier upgrade before supposedly being allowed to withdraw earnings.\n* **Brand Impersonation**: Scammers frequently impersonate reputable platforms like Shopee to build false trust and legitimacy.\n* **Urgency and Payment Coercion**: Imposing a tight deadline ('before 6 PM today') pressure victims into making rushed transfers via PayNow without verifying the legitimacy of the scheme."
+        },
+        "decision": "SCAM",
+        "score": 0.98,
+        "confidence": 1.0,
+        "response_warnings": [],
+        "latency_ms": 5346.235999997589
+      },
+      {
+        "id": "SCAM_05_SINGPASS_VERIFY",
+        "expected": "SCAM",
+        "category": "Singpass Phishing / Remote Access",
+        "transcript": "Hello sir, calling from SingTel technical support. Your home fibre router has been compromised by foreign hackers. Please download the AnyDesk support application on your phone right now and approve the Singpass login notification so our engineer can secure your identity profile.",
+        "true_label": 1,
+        "status": "completed",
+        "attempts": [
+          {
+            "at": "2026-10-19T11:57:29.129967+00:00",
+            "status": "completed",
+            "raw_response": {
+              "verdict": "SCAM",
+              "confidence": 1.0,
+              "score": 100,
+              "reason": "This call is a classic technical support and identity takeover scam impersonating Singtel to gain remote access to your device and compromise your Singpass account.\n\n* **Telco Impersonation**: The caller falsely poses as Singtel technical support to establish false authority and trust.\n* **Fear and Urgency Tactics**: They fabricate a claim that your router has been hacked by foreign entities to panic you into taking immediate action without verifying.\n* **Remote Access Software Request**: Directing you to install tools like AnyDesk allows scammers to take full control of your device and spy on sensitive information.\n* **Singpass Credential Harvesting**: Asking you to approve a Singpass login notification allows criminals unauthorised access to government services, bank accounts, and personal data."
+            },
+            "latency_ms": 5264.869900001941
+          }
+        ],
+        "raw_response": {
+          "verdict": "SCAM",
+          "confidence": 1.0,
+          "score": 100,
+          "reason": "This call is a classic technical support and identity takeover scam impersonating Singtel to gain remote access to your device and compromise your Singpass account.\n\n* **Telco Impersonation**: The caller falsely poses as Singtel technical support to establish false authority and trust.\n* **Fear and Urgency Tactics**: They fabricate a claim that your router has been hacked by foreign entities to panic you into taking immediate action without verifying.\n* **Remote Access Software Request**: Directing you to install tools like AnyDesk allows scammers to take full control of your device and spy on sensitive information.\n* **Singpass Credential Harvesting**: Asking you to approve a Singpass login notification allows criminals unauthorised access to government services, bank accounts, and personal data."
+        },
+        "decision": "SCAM",
+        "score": 1.0,
+        "confidence": 1.0,
+        "response_warnings": [],
+        "latency_ms": 5264.869900001941
+      },
+      {
+        "id": "SCAM_06_FRIEND_IMPERSONATION",
+        "expected": "SCAM",
+        "category": "Urgent Impersonation / Unverified Transfer",
+        "transcript": "Hey bro, it is me, I lost my phone yesterday and this is my temporary number. I am stuck at a clinic right now and my banking app is locked. Can you urgently PayNow 800 dollars to this third-party mobile number first? I will pay you back tonight, please hurry.",
+        "true_label": 1,
+        "status": "completed",
+        "attempts": [
+          {
+            "at": "2026-10-19T11:57:45.712609+00:00",
+            "status": "completed",
+            "raw_response": {
+              "verdict": "SCAM",
+              "confidence": 0.98,
+              "score": 98,
+              "reason": "This transcript is a textbook example of the prevalent 'Fake Friend' impersonation scam in Singapore.\n\n* **Friend Impersonation (Lost Phone Pretext)**: The sender claims to be a friend using a temporary number due to a lost phone, designed to bypass caller verification.\n* **Manufactured Emergency**: Fabricating an urgent situation at a clinic leverages panic and sympathy to bypass the victim's critical thinking.\n* **Technical Obstacle Excuse**: Claiming that their banking app is locked provides a convenient justification for not being able to pay themselves.\n* **Third-Party PayNow Transfer**: Demanding an immediate fund transfer via PayNow to an unfamiliar third-party number is a standard method used to funnel money through mule accounts."
+            },
+            "latency_ms": 7845.099000001937
+          }
+        ],
+        "raw_response": {
+          "verdict": "SCAM",
+          "confidence": 0.98,
+          "score": 98,
+          "reason": "This transcript is a textbook example of the prevalent 'Fake Friend' impersonation scam in Singapore.\n\n* **Friend Impersonation (Lost Phone Pretext)**: The sender claims to be a friend using a temporary number due to a lost phone, designed to bypass caller verification.\n* **Manufactured Emergency**: Fabricating an urgent situation at a clinic leverages panic and sympathy to bypass the victim's critical thinking.\n* **Technical Obstacle Excuse**: Claiming that their banking app is locked provides a convenient justification for not being able to pay themselves.\n* **Third-Party PayNow Transfer**: Demanding an immediate fund transfer via PayNow to an unfamiliar third-party number is a standard method used to funnel money through mule accounts."
+        },
+        "decision": "SCAM",
+        "score": 0.98,
+        "confidence": 0.98,
+        "response_warnings": [],
+        "latency_ms": 7845.099000001937
+      },
+      {
+        "id": "BENIGN_01_DINNER_PAYNOW",
+        "expected": "NOT_SCAM",
+        "category": "Legitimate Everyday Financial Conversation",
+        "transcript": "Hey everyone, thanks for coming to dinner at Tiong Bahru last night! The total bill at the restaurant came up to 120 dollars, so it is 30 dollars per person. Whenever you are free this week, you can just PayNow me at my usual mobile number. No rush at all!",
+        "true_label": 0,
+        "status": "completed",
+        "attempts": [
+          {
+            "at": "2026-10-19T11:57:58.268153+00:00",
+            "status": "completed",
+            "raw_response": {
+              "verdict": "NOT_SCAM",
+              "confidence": 0.99,
+              "score": 2,
+              "reason": "This is a standard, benign communication between friends splitting a restaurant bill.\n\n* **Absence of Urgency**: The sender emphasizes that there is 'no rush at all', which directly contrasts with the high-pressure tactics typically used by scammers.\n* **Standard Social Context**: Splitting a dining bill via PayNow among friends is a standard, legitimate practice in Singapore.\n* **Pre-existing Relationship**: The caller references a specific shared dinner and requests payment to their 'usual mobile number', indicating an established personal relationship rather than an unsolicited contact.\n* **No Malicious Requests**: There are no requests for sensitive personal information, OTPs, bank credentials, or suspicious external payment links."
+            },
+            "latency_ms": 6411.364300001878
+          }
+        ],
+        "raw_response": {
+          "verdict": "NOT_SCAM",
+          "confidence": 0.99,
+          "score": 2,
+          "reason": "This is a standard, benign communication between friends splitting a restaurant bill.\n\n* **Absence of Urgency**: The sender emphasizes that there is 'no rush at all', which directly contrasts with the high-pressure tactics typically used by scammers.\n* **Standard Social Context**: Splitting a dining bill via PayNow among friends is a standard, legitimate practice in Singapore.\n* **Pre-existing Relationship**: The caller references a specific shared dinner and requests payment to their 'usual mobile number', indicating an established personal relationship rather than an unsolicited contact.\n* **No Malicious Requests**: There are no requests for sensitive personal information, OTPs, bank credentials, or suspicious external payment links."
+        },
+        "decision": "NOT_SCAM",
+        "score": 0.02,
+        "confidence": 0.99,
+        "response_warnings": [],
+        "latency_ms": 6411.364300001878
+      },
+      {
+        "id": "BENIGN_02_SECURITY_AWARENESS",
+        "expected": "NOT_SCAM",
+        "category": "Scam Awareness / Educational Advice",
+        "transcript": "Welcome to our company cybersecurity briefing. Please remember that officers from the Singapore Police Force, MAS, or DBS will never ask you to transfer money to a safety account or ask for your Singpass password and SMS OTP over a phone call. If you receive such a call, hang up immediately and call the official ScamShield helpline at 1799.",
+        "true_label": 0,
+        "status": "completed",
+        "attempts": [
+          {
+            "at": "2026-10-19T11:58:12.906582+00:00",
+            "status": "completed",
+            "raw_response": {
+              "verdict": "NOT_SCAM",
+              "confidence": 0.99,
+              "score": 0,
+              "reason": "This transcript is a legitimate cybersecurity awareness briefing and exhibits no scam indicators.\n\n* **Cybersecurity Education**: The speaker provides accurate educational guidance on common government and bank impersonation scam tactics.\n* **No Solicitation**: There is no demand or request for sensitive information, Singpass credentials, OTPs, or fund transfers.\n* **Official Help Channels**: The caller directs the listener to the genuine official ScamShield helpline (1799) to verify suspicious calls.\n* **Absence of Coercion**: The tone is informative and protective rather than threatening, urgent, or coercive."
+            },
+            "latency_ms": 7043.358499999158
+          }
+        ],
+        "raw_response": {
+          "verdict": "NOT_SCAM",
+          "confidence": 0.99,
+          "score": 0,
+          "reason": "This transcript is a legitimate cybersecurity awareness briefing and exhibits no scam indicators.\n\n* **Cybersecurity Education**: The speaker provides accurate educational guidance on common government and bank impersonation scam tactics.\n* **No Solicitation**: There is no demand or request for sensitive information, Singpass credentials, OTPs, or fund transfers.\n* **Official Help Channels**: The caller directs the listener to the genuine official ScamShield helpline (1799) to verify suspicious calls.\n* **Absence of Coercion**: The tone is informative and protective rather than threatening, urgent, or coercive."
+        },
+        "decision": "NOT_SCAM",
+        "score": 0.0,
+        "confidence": 0.99,
+        "response_warnings": [],
+        "latency_ms": 7043.358499999158
+      },
+      {
+        "id": "BENIGN_03_CORPORATE_INVOICE",
+        "expected": "NOT_SCAM",
+        "category": "Standard Business Billing Discussion",
+        "transcript": "Hi Mei Hui, following up on our quarterly software maintenance renewal. I have uploaded the official tax invoice to your procurement portal under Purchase Order 4421. As per our standard net-30 payment terms, your finance team can process the bank transfer through the existing vendor GIRO arrangement next month.",
+        "true_label": 0,
+        "status": "completed",
+        "attempts": [
+          {
+            "at": "2026-10-19T11:58:24.573242+00:00",
+            "status": "completed",
+            "raw_response": {
+              "verdict": "NOT_SCAM",
+              "confidence": 0.99,
+              "score": 0,
+              "reason": "This call is a legitimate business communication regarding software maintenance renewal through established corporate procurement channels.\n\n* **Standard Business Workflow**: The caller references standard procurement procedures, including an established Purchase Order (PO 4421) and standard net-30 payment terms.\n* **Official Channel Usage**: The invoice is uploaded to the company's internal procurement portal rather than sent via suspicious external links or direct messaging.\n* **Existing Payment Arrangement**: Payment is routed through pre-approved corporate channels (existing vendor GIRO) rather than urgent transfers to personal PayNow accounts or suspicious bank details.\n* **Absence of Pressure**: The interaction exhibits no artificial urgency, threats of legal action, or impersonation of government agencies."
+            },
+            "latency_ms": 4709.446600001684
+          }
+        ],
+        "raw_response": {
+          "verdict": "NOT_SCAM",
+          "confidence": 0.99,
+          "score": 0,
+          "reason": "This call is a legitimate business communication regarding software maintenance renewal through established corporate procurement channels.\n\n* **Standard Business Workflow**: The caller references standard procurement procedures, including an established Purchase Order (PO 4421) and standard net-30 payment terms.\n* **Official Channel Usage**: The invoice is uploaded to the company's internal procurement portal rather than sent via suspicious external links or direct messaging.\n* **Existing Payment Arrangement**: Payment is routed through pre-approved corporate channels (existing vendor GIRO) rather than urgent transfers to personal PayNow accounts or suspicious bank details.\n* **Absence of Pressure**: The interaction exhibits no artificial urgency, threats of legal action, or impersonation of government agencies."
+        },
+        "decision": "NOT_SCAM",
+        "score": 0.0,
+        "confidence": 0.99,
+        "response_warnings": [],
+        "latency_ms": 4709.446600001684
+      },
+      {
+        "id": "BENIGN_04_AI_NARRATION",
+        "expected": "NOT_SCAM",
+        "category": "Legitimate Synthetic Narration / Lecture",
+        "transcript": "In this module of Security Analytics, we examine how self-supervised speech models such as WavLM extract acoustic representations from 16 kilohertz waveforms. By separating voice authenticity scores from transcript semantics, analysts can avoid falsely flagging benign text-to-speech accessibility tools as fraud.",
+        "true_label": 0,
+        "status": "completed",
+        "attempts": [
+          {
+            "at": "2026-10-19T11:58:40.573464+00:00",
+            "status": "completed",
+            "raw_response": {
+              "verdict": "NOT_SCAM",
+              "confidence": 1.0,
+              "score": 0,
+              "reason": "This transcript is an educational or academic lecture on audio security analytics and contains no scam elements.\n\n* **Legitimate Academic Content**: The dialogue focuses on technical concepts involving machine learning, WavLM, and speech analytics.\n* **No Malicious Intent**: There are no solicitations for personal data, credentials, or financial transfers.\n* **No Impersonation**: The speaker does not pretend to be a government official, bank officer, or law enforcement agent."
+            },
+            "latency_ms": 6714.014799999859
+          }
+        ],
+        "raw_response": {
+          "verdict": "NOT_SCAM",
+          "confidence": 1.0,
+          "score": 0,
+          "reason": "This transcript is an educational or academic lecture on audio security analytics and contains no scam elements.\n\n* **Legitimate Academic Content**: The dialogue focuses on technical concepts involving machine learning, WavLM, and speech analytics.\n* **No Malicious Intent**: There are no solicitations for personal data, credentials, or financial transfers.\n* **No Impersonation**: The speaker does not pretend to be a government official, bank officer, or law enforcement agent."
+        },
+        "decision": "NOT_SCAM",
+        "score": 0.0,
+        "confidence": 1.0,
+        "response_warnings": [],
+        "latency_ms": 6714.014799999859
+      },
+      {
+        "id": "BENIGN_05_BANK_BRANCH_INQUIRY",
+        "expected": "NOT_SCAM",
+        "category": "Legitimate Customer Inquiry",
+        "transcript": "Hi, I am planning to visit the OCBC branch at Jurong East tomorrow morning with my mother to update her joint account passbook. Do we need to book a queue slot on the mobile app beforehand, and should she bring her physical NRIC card along?",
+        "true_label": 0,
+        "status": "completed",
+        "attempts": [
+          {
+            "at": "2026-10-19T11:58:51.793514+00:00",
+            "status": "completed",
+            "raw_response": {
+              "verdict": "NOT_SCAM",
+              "confidence": 0.99,
+              "score": 0,
+              "reason": "This call is a standard customer inquiry regarding routine banking procedures with no malicious intent.\n\n* **Routine Customer Inquiry**: The caller is asking practical operational questions about visiting a physical OCBC branch to update a passbook.\n* **No Coercion or Pressure**: The caller is not attempting to extract sensitive information, credentials, or funds.\n* **Standard Verification Awareness**: Asking whether physical identification (NRIC) is needed reflects normal awareness of standard banking verification protocols.\n* **Absence of Scam Indicators**: There are no impersonation attempts, urgent threats, or unusual payment requests present."
+            },
+            "latency_ms": 3935.1529000014125
+          }
+        ],
+        "raw_response": {
+          "verdict": "NOT_SCAM",
+          "confidence": 0.99,
+          "score": 0,
+          "reason": "This call is a standard customer inquiry regarding routine banking procedures with no malicious intent.\n\n* **Routine Customer Inquiry**: The caller is asking practical operational questions about visiting a physical OCBC branch to update a passbook.\n* **No Coercion or Pressure**: The caller is not attempting to extract sensitive information, credentials, or funds.\n* **Standard Verification Awareness**: Asking whether physical identification (NRIC) is needed reflects normal awareness of standard banking verification protocols.\n* **Absence of Scam Indicators**: There are no impersonation attempts, urgent threats, or unusual payment requests present."
+        },
+        "decision": "NOT_SCAM",
+        "score": 0.0,
+        "confidence": 0.99,
+        "response_warnings": [],
+        "latency_ms": 3935.1529000014125
+      },
+      {
+        "id": "BENIGN_06_IT_HELPDESK_NOTICE",
+        "expected": "NOT_SCAM",
+        "category": "Routine Internal IT Maintenance",
+        "transcript": "Good morning team, the university learning management system will undergo scheduled database maintenance this Sunday from 2 AM to 5 AM. Please save your coursework submissions beforehand. No action or password reset is required from students.",
+        "true_label": 0,
+        "status": "completed",
+        "attempts": [
+          {
+            "at": "2026-10-19T11:59:07.691843+00:00",
+            "status": "completed",
+            "raw_response": {
+              "verdict": "NOT_SCAM",
+              "confidence": 0.99,
+              "score": 0,
+              "reason": "This is a legitimate administrative notification regarding scheduled system maintenance with no indicators of fraudulent activity.\n\n* **Routine IT Notice**: The message communicates standard advance notice for off-peak IT maintenance.\n* **No Action Required**: It explicitly states that no credential changes, password resets, or personal data submissions are needed.\n* **No Malicious Requests**: There are no phishing links, requests for payment, or coercive tactics present."
+            },
+            "latency_ms": 5833.221599998069
+          }
+        ],
+        "raw_response": {
+          "verdict": "NOT_SCAM",
+          "confidence": 0.99,
+          "score": 0,
+          "reason": "This is a legitimate administrative notification regarding scheduled system maintenance with no indicators of fraudulent activity.\n\n* **Routine IT Notice**: The message communicates standard advance notice for off-peak IT maintenance.\n* **No Action Required**: It explicitly states that no credential changes, password resets, or personal data submissions are needed.\n* **No Malicious Requests**: There are no phishing links, requests for payment, or coercive tactics present."
+        },
+        "decision": "NOT_SCAM",
+        "score": 0.0,
+        "confidence": 0.99,
+        "response_warnings": [],
+        "latency_ms": 5833.221599998069
+      }
+    ],
+    "summary": {
+      "status": "completed",
+      "attempted_cases": 12,
+      "planned_cases": 12,
+      "statuses": {
+        "completed": 12
+      },
+      "outcomes_by_reference_class": {
+        "0": {
+          "NOT_SCAM": 6
+        },
+        "1": {
+          "SCAM": 6
+        }
+      },
+      "decided_count": 12,
+      "inconclusive_count": 0,
+      "decision_coverage": 1.0,
+      "selective_metrics": {
+        "count": 12,
+        "accuracy": 1.0,
+        "reference_counts": {
+          "negative": 6,
+          "positive": 6
+        },
+        "both_reference_classes_present": true,
+        "confusion_matrix": {
+          "tp": 6,
+          "tn": 6,
+          "fp": 0,
+          "fn": 0
+        },
+        "positive_class": {
+          "support": 6,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "negative_class": {
+          "support": 6,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "macro_f1": 1.0,
+        "false_positive_rate": 0.0,
+        "false_negative_rate": 0.0,
+        "undefined_policy": "Precision is zero when no positive prediction; recall/F1/FPR are null for absent reference classes."
+      },
+      "valid_score_count": 12,
+      "roc_eer": {
+        "roc_auc": 1.0,
+        "eer": 0.0,
+        "eer_threshold": null,
+        "eer_method": "Linear interpolation on empirical ROC; not a deployment threshold selected on test data."
+      },
+      "successful_component_latency": {
+        "count": 12,
+        "mean_ms": 5728.409583334117,
+        "p95_ms": 7404.141725000408
+      },
+      "positive_class": "SCAM",
+      "negative_class": "NOT_SCAM",
+      "baseline": {
+        "version": "keyword-any-match-v1",
+        "patterns": [
+          "\\barrest\\b",
+          "\\bdeport(?:ed|ation)?\\b",
+          "\\botp\\b",
+          "\\bone[ -]time password\\b",
+          "\\bsafety (?:holding )?account\\b",
+          "\\bsecurity deposit\\b",
+          "\\badvance top[ -]up\\b",
+          "\\banydesk\\b",
+          "\\bsingpass (?:password|login)\\b"
+        ],
+        "all_planned_cases": {
+          "count": 12,
+          "accuracy": 0.8333333333333334,
+          "reference_counts": {
+            "negative": 6,
+            "positive": 6
+          },
+          "both_reference_classes_present": true,
+          "confusion_matrix": {
+            "tp": 5,
+            "tn": 5,
+            "fp": 1,
+            "fn": 1
+          },
+          "positive_class": {
+            "support": 6,
+            "precision": 0.8333333333333334,
+            "recall": 0.8333333333333334,
+            "f1": 0.8333333333333334
+          },
+          "negative_class": {
+            "support": 6,
+            "precision": 0.8333333333333334,
+            "recall": 0.8333333333333334,
+            "f1": 0.8333333333333334
+          },
+          "macro_f1": 0.8333333333333334,
+          "false_positive_rate": 0.16666666666666666,
+          "false_negative_rate": 0.16666666666666666,
+          "undefined_policy": "Precision is zero when no positive prediction; recall/F1/FPR are null for absent reference classes."
+        }
+      },
+      "matched_comparison": {
+        "case_ids": [
+          "SCAM_01_SPF_MAS",
+          "SCAM_02_DBS_OTP",
+          "SCAM_03_MOM_WORKPASS",
+          "SCAM_04_JOB_PREPAYMENT",
+          "SCAM_05_SINGPASS_VERIFY",
+          "SCAM_06_FRIEND_IMPERSONATION",
+          "BENIGN_01_DINNER_PAYNOW",
+          "BENIGN_02_SECURITY_AWARENESS",
+          "BENIGN_03_CORPORATE_INVOICE",
+          "BENIGN_04_AI_NARRATION",
+          "BENIGN_05_BANK_BRANCH_INQUIRY",
+          "BENIGN_06_IT_HELPDESK_NOTICE"
+        ],
+        "gemini": {
+          "count": 12,
+          "accuracy": 1.0,
+          "reference_counts": {
+            "negative": 6,
+            "positive": 6
+          },
+          "both_reference_classes_present": true,
+          "confusion_matrix": {
+            "tp": 6,
+            "tn": 6,
+            "fp": 0,
+            "fn": 0
+          },
+          "positive_class": {
+            "support": 6,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0
+          },
+          "negative_class": {
+            "support": 6,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0
+          },
+          "macro_f1": 1.0,
+          "false_positive_rate": 0.0,
+          "false_negative_rate": 0.0,
+          "undefined_policy": "Precision is zero when no positive prediction; recall/F1/FPR are null for absent reference classes."
+        },
+        "rule_baseline": {
+          "count": 12,
+          "accuracy": 0.8333333333333334,
+          "reference_counts": {
+            "negative": 6,
+            "positive": 6
+          },
+          "both_reference_classes_present": true,
+          "confusion_matrix": {
+            "tp": 5,
+            "tn": 5,
+            "fp": 1,
+            "fn": 1
+          },
+          "positive_class": {
+            "support": 6,
+            "precision": 0.8333333333333334,
+            "recall": 0.8333333333333334,
+            "f1": 0.8333333333333334
+          },
+          "negative_class": {
+            "support": 6,
+            "precision": 0.8333333333333334,
+            "recall": 0.8333333333333334,
+            "f1": 0.8333333333333334
+          },
+          "macro_f1": 0.8333333333333334,
+          "false_positive_rate": 0.16666666666666666,
+          "false_negative_rate": 0.16666666666666666,
+          "undefined_policy": "Precision is zero when no positive prediction; recall/F1/FPR are null for absent reference classes."
+        }
+      },
+      "cases_with_request_errors": 0,
+      "explanation_fidelity": "Not automatically scored. Review raw_response.reason and transcript together."
+    }
+  },
+  "whisper_evaluation": null,
+  "limitations": [
+    "Scripted cases are diagnostic examples, not an independent real-call benchmark.",
+    "This audit identifies model files but cannot prove train/test separation or selected training epoch.",
+    "No accuracy claim is supported by scores/confidence alone.",
+    "Request/inference timings exclude the browser workflow; app end-to-end latency is not measured.",
+    "Explanation fidelity needs human review. The keyword baseline is a documented comparator, not an established commercial tool."
+  ],
+  "session_history": [
+    {
+      "started_at": "2026-10-19T11:56:25.570766+00:00",
+      "resumed": false,
+      "interval_seconds": 14.0,
+      "max_attempts": 3,
+      "finished_at": "2026-10-19T11:59:07.698202+00:00",
+      "error": null
+    }
+  ],
+  "updated_at": "2026-10-19T11:59:07.698202+00:00"
+}

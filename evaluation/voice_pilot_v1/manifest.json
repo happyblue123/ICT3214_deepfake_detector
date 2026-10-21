@@ -1,0 +1,116 @@
+{
+  "prepared_date": "2026-10-19",
+  "purpose": "Small source-labelled exploratory pilot, not a documented held-out benchmark",
+  "selection": "Two supplied OSR recordings plus first two LibriSpeech ground-truth/synthesized pairs from the NaturalSpeech 2 author demo; selected before prediction",
+  "counts": {
+    "real": 4,
+    "fake": 2
+  },
+  "training_test_separation": "Unknown because the checkpoint training manifest is unavailable",
+  "limits": [
+    "Six recordings only; multiple domains and durations",
+    "Two synthetic clips use one generator",
+    "Source/speaker overlap with training is not verified",
+    "No detector predictions were used to choose or label these files"
+  ],
+  "excluded_from_voice_labels": {
+    "file": "Apple-iCloud-Account-Breached_Scam-Call.mp3",
+    "reason": "FTC verifies scam content, not human/synthetic voice origin"
+  },
+  "files": [
+    {
+      "id": "osr_female",
+      "label": "real",
+      "file": "OSR_us_000_0010_8k.wav",
+      "local": "C:\\Users\\jianyu\\Downloads\\OSR_us_000_0010_8k.wav",
+      "source_page": "https://www.voiptroubleshooter.com/open_speech/american.html",
+      "label_basis": "Female human Harvard-sentence reading listed by Open Speech Repository",
+      "relative_path": "real/OSR_us_000_0010_8k.wav",
+      "sha256": "a4bf9becd046d7aedb6d05b6e12347a6294a44f74d263089c636fb0a2b1e6561",
+      "bytes": 538014,
+      "normalized_duration_seconds": 33.623125,
+      "training_overlap_verified": false
+    },
+    {
+      "id": "osr_male",
+      "label": "real",
+      "file": "OSR_us_000_0030_8k.wav",
+      "local": "C:\\Users\\jianyu\\Downloads\\OSR_us_000_0030_8k.wav",
+      "source_page": "https://www.voiptroubleshooter.com/open_speech/american.html",
+      "label_basis": "Male human Harvard-sentence reading listed by Open Speech Repository",
+      "relative_path": "real/OSR_us_000_0030_8k.wav",
+      "sha256": "d3e1cfba98a44ddfc6e99508e663794c8dc41bdb2baced224f779c453143b622",
+      "bytes": 750886,
+      "normalized_duration_seconds": 46.927625,
+      "training_overlap_verified": false
+    },
+    {
+      "id": "ns2_case1_real",
+      "label": "real",
+      "file": "NS2_LibriSpeech_case1_gt.flac",
+      "url": "https://speechresearch.github.io/naturalspeech2/audio/librispeech_examples/case1/gt.wav",
+      "source_page": "https://speechresearch.github.io/naturalspeech2/",
+      "source_table": "LibriSpeech Samples",
+      "source_case": 1,
+      "source_column": "Ground Truth",
+      "label_basis": "Authors identify original ground-truth speech",
+      "detected_format": "FLAC",
+      "relative_path": "real/NS2_LibriSpeech_case1_gt.flac",
+      "sha256": "ad380c17dd0843a13de1c5d55a0e3b37c4a792648079ed57ff5737a1db4bf1c5",
+      "bytes": 140094,
+      "normalized_duration_seconds": 6.905,
+      "training_overlap_verified": false
+    },
+    {
+      "id": "ns2_case1_fake",
+      "label": "fake",
+      "file": "NS2_LibriSpeech_case1_ns.wav",
+      "url": "https://speechresearch.github.io/naturalspeech2/audio/librispeech_examples/case1/ns.wav",
+      "source_page": "https://speechresearch.github.io/naturalspeech2/",
+      "source_table": "LibriSpeech Samples",
+      "source_case": 1,
+      "source_column": "NaturalSpeech 2",
+      "label_basis": "Authors identify NaturalSpeech 2 synthesized speech",
+      "detected_format": "WAVE",
+      "relative_path": "fake/NS2_LibriSpeech_case1_ns.wav",
+      "sha256": "d7595de4a9f352820580af5e2a71662d203ed566b8c048218f0364d30384d5ca",
+      "bytes": 213244,
+      "normalized_duration_seconds": 6.6625,
+      "training_overlap_verified": false
+    },
+    {
+      "id": "ns2_case2_real",
+      "label": "real",
+      "file": "NS2_LibriSpeech_case2_gt.flac",
+      "url": "https://speechresearch.github.io/naturalspeech2/audio/librispeech_examples/case2/gt.wav",
+      "source_page": "https://speechresearch.github.io/naturalspeech2/",
+      "source_table": "LibriSpeech Samples",
+      "source_case": 2,
+      "source_column": "Ground Truth",
+      "label_basis": "Authors identify original ground-truth speech",
+      "detected_format": "FLAC",
+      "relative_path": "real/NS2_LibriSpeech_case2_gt.flac",
+      "sha256": "41167c43cf7e66d8dc66354ac0dce53d157519b2ec8c7f7fe2c3f96235bf5594",
+      "bytes": 75299,
+      "normalized_duration_seconds": 3.395,
+      "training_overlap_verified": false
+    },
+    {
+      "id": "ns2_case2_fake",
+      "label": "fake",
+      "file": "NS2_LibriSpeech_case2_ns.wav",
+      "url": "https://speechresearch.github.io/naturalspeech2/audio/librispeech_examples/case2/ns.wav",
+      "source_page": "https://speechresearch.github.io/naturalspeech2/",
+      "source_table": "LibriSpeech Samples",
+      "source_case": 2,
+      "source_column": "NaturalSpeech 2",
+      "label_basis": "Authors identify NaturalSpeech 2 synthesized speech",
+      "detected_format": "WAVE",
+      "relative_path": "fake/NS2_LibriSpeech_case2_ns.wav",
+      "sha256": "976e91a5fcb6faa471551dec7a3cb567c62c31b48359695932ea50d0e57bb5ea",
+      "bytes": 140444,
+      "normalized_duration_seconds": 4.3875,
+      "training_overlap_verified": false
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+[
+  {
+    "id": "FTC_Apple_support/reference",
+    "pair_id": "FTC_Apple_support",
+    "transcript_kind": "reference",
+    "expected": "SCAM",
+    "transcript": "Before using any devices or going online, please contact Apple Support Advisor. Press 1 to connect to Apple Support Advisor. Press 2 to listen to this again. Thank you."
+  },
+  {
+    "id": "FTC_Apple_support/whisper",
+    "pair_id": "FTC_Apple_support",
+    "transcript_kind": "whisper",
+    "expected": "SCAM",
+    "transcript": "Before using any devices or going online, please contact Apple Support Advisor. Press 1 to connect to Apple Support Advisor. Press 2 to listen to this again. Thank you."
+  }
+]

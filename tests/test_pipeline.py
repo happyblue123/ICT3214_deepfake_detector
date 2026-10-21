@@ -170,6 +170,32 @@ class ApiTests(unittest.TestCase):
                 "/api/text-analysis", json={"text": "x" * (main.MAX_TEXT_ANALYSIS + 1)}
             ).status_code, 422)
 
+    def test_text_analysis_explains_temporary_provider_failures(self):
+        for code in (503, 504):
+            with self.subTest(code=code):
+                error = RuntimeError("Private provider diagnostics")
+                error.code = code
+
+                class Analyzer:
+                    def classify_text(self, text):
+                        raise error
+
+                with patch.object(main, "CONTENT_ANALYZER", Analyzer()):
+                    response = self.client.post("/api/text-analysis", json={"text": "example"})
+                self.assertEqual(response.status_code, 503)
+                self.assertIn("temporarily busy", response.json()["detail"])
+                self.assertNotIn("Private provider diagnostics", response.text)
+
+    def test_text_analysis_invalid_output_remains_a_failure(self):
+        class Analyzer:
+            def classify_text(self, text):
+                raise ValueError("Malformed JSON")
+
+        with patch.object(main, "CONTENT_ANALYZER", Analyzer()):
+            response = self.client.post("/api/text-analysis", json={"text": "example"})
+        self.assertEqual(response.status_code, 502)
+        self.assertNotIn("scam_verdict", response.json())
+
     def test_url_analysis_accepts_supported_public_video_links(self):
         def fake_download(command, **kwargs):
             output = Path(command[command.index("--output") + 1].replace("%(ext)s", "wav"))
@@ -314,8 +340,9 @@ class ApiTests(unittest.TestCase):
         self.wait(job_id)
         with main.LOCK:
             main.JOBS[job_id]["updated_at"] = time.time() - 1900
-        self.assertEqual(self.client.get(f"/api/analyses/{job_id}").status_code, 404)
-        self.assertFalse((main.RUNTIME / job_id).exists())
+        with patch.object(main, "RETENTION_SECONDS", 1800):
+            self.assertEqual(self.client.get(f"/api/analyses/{job_id}").status_code, 404)
+            self.assertFalse((main.RUNTIME / job_id).exists())
 
 
 if __name__ == "__main__":

@@ -1,0 +1,2 @@
+id,audio_path,reference_text,scam_label,reference_source_url,voice_origin
+FTC_Apple_support,C:\Users\jianyu\Downloads\Apple-iCloud-Account-Breached_Scam-Call.mp3,"Before using any devices or going online, please contact Apple Support Advisor. Press 1 to connect to Apple Support Advisor. Press 2 to listen to this again. Thank you.",SCAM,https://consumer.ftc.gov/features/robocall-scam-examples,unknown

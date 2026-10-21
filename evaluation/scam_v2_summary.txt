@@ -1,0 +1,19 @@
+VOICESCOPE EVALUATION SUMMARY
+Evaluator: 2026-10-19.2
+Scores are not accuracy percentages. Failed and inconclusive cases are shown separately.
+
+SCAM (positive=SCAM, negative=NOT_SCAM)
+Status: completed; planned: 12; statuses: {'completed': 12}
+Decision coverage of all planned cases: 100.00%
+Accuracy among 12 definite valid decisions: 100.00%
+Macro F1: 1.0; confusion matrix: {'tp': 6, 'tn': 6, 'fp': 0, 'fn': 0}
+Positive-class precision/recall/F1: {'support': 6, 'precision': 1.0, 'recall': 1.0, 'f1': 1.0}
+Negative-class precision/recall/F1: {'support': 6, 'precision': 1.0, 'recall': 1.0, 'f1': 1.0}
+ROC-AUC: 1.0; interpolated EER: 0.00%
+Successful component timing (n=12): mean 5728.409583334117 ms; p95 7404.141725000408 ms
+Case set: 12 scripted diagnostic transcripts; intended labels require human review
+Rule baseline on the same 12 definite valid cases: accuracy 83.33%; macro F1 0.8333333333333334
+Cases with request errors, including subsequently successful retries: 0
+
+Keep the JSON: it contains the input manifest, raw responses, attempt history and individual predictions.
+These component timings do not measure the full browser/app workflow. Training provenance and explanation fidelity need separate evidence.
